@@ -1,0 +1,470 @@
+{
+  "info": {
+    "_postman_id": "d56f32bc-9dc8-41df-8548-9d3e963e7062",
+    "name": "TrustUs Health Portal Backend",
+    "description": "Backend API organized by feature. Set baseUrl and adminEmail, request an OTP, then verify it; the access token is saved automatically. Refresh tokens use Postman's cookie jar. Future APIs can be added under their feature folder without changing the collection-level auth setup.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "otpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "module",
+      "value": "patient_registry",
+      "type": "string"
+    },
+    {
+      "key": "staffModuleKey",
+      "value": "patient_registry",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "grantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffEmail",
+      "value": "staff@example.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "description": "Unauthenticated service health. This endpoint does not test MongoDB or email connectivity.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/healthz",
+            "description": "Returns {\"status\":\"ok\"}; intentionally avoids a database call."
+          },
+          "response": [],
+          "auth": {
+            "type": "noauth"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Request an OTP, retrieve it from Mailpit/Resend, then set otpCode and verify. The verify script saves accessToken; the refresh cookie is stored by Postman's cookie jar.",
+      "item": [
+        {
+          "name": "Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/otp/request",
+            "description": "202 is returned whether or not the account exists. Check Mailpit or the Resend delivery dashboard for the actual message."
+          },
+          "response": [],
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('accessToken', pm.response.json().access_token);",
+                  "  pm.test('Saved access token', function () { pm.expect(pm.collectionVariables.get('accessToken')).to.be.a('string').and.not.empty; });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/otp/verify",
+            "description": "Set otpCode to the six-digit code received by email. A refresh cookie is also set."
+          },
+          "response": [],
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Current user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/refresh",
+            "description": "Uses the HttpOnly tu_refresh cookie saved by Postman. The response includes a new access token; the cookie rotates automatically."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) { pm.collectionVariables.set('accessToken', pm.response.json().access_token); }"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/logout",
+            "description": "Revokes the refresh-token session and clears the refresh cookie. Clear accessToken manually after testing if desired."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard and Config",
+      "description": "Dashboard requires a signed-in user. App config is public. Partner configuration requires access to a lab-aware module; current feature modules are not implemented yet.",
+      "item": [
+        {
+          "name": "My dashboard modules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/me/modules"
+          },
+          "response": []
+        },
+        {
+          "name": "Public app configuration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/config/app"
+          },
+          "response": [],
+          "auth": {
+            "type": "noauth"
+          }
+        },
+        {
+          "name": "Partners enabled for module",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/config/partners?module={{module}}",
+            "description": "Change module to a lab-aware module key. Admins can inspect its configured partner list even before that module's feature API has been built."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Access Requests",
+      "description": "Staff request access to a module or submodule. The target must be an implemented, grantable dashboard module; current feature modules are not yet built.",
+      "item": [
+        {
+          "name": "Request module access",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"module\": \"{{staffModuleKey}}\",\n  \"submodule\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/access/requests",
+            "description": "Requires a non-Admin user and a built staff-eligible module. Update staffModuleKey when a feature module is implemented."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) { pm.collectionVariables.set('grantId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin - Users and Modules",
+      "description": "All requests in this folder require an Admin bearer token.",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/users"
+          },
+          "response": []
+        },
+        {
+          "name": "Invite user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) { pm.collectionVariables.set('userId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"name\": \"Postman Test User\",\n  \"role\": \"staff\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/access/users",
+            "description": "Creates an account allowed to request OTP login. Invitations do not send a separate email."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman User\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/access/users/{{userId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "List dashboard modules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/modules"
+          },
+          "response": []
+        },
+        {
+          "name": "Set module visibility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"visible_to_staff\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/access/modules/{{staffModuleKey}}/visibility",
+            "description": "Requires a built staff-eligible module. Admin-only Access Portal visibility cannot be changed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Requests and Grants",
+      "description": "Admin-only workflow. Approve/deny requires an existing pending grant request; pre-grant requires an implemented, grantable module.",
+      "item": [
+        {
+          "name": "List pending requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/approve"
+          },
+          "response": []
+        },
+        {
+          "name": "Deny request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/deny"
+          },
+          "response": []
+        },
+        {
+          "name": "Pre-grant module access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) { pm.collectionVariables.set('grantId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"module\": \"{{staffModuleKey}}\",\n  \"submodule\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/access/grants",
+            "description": "Requires an existing user and a built, grantable module."
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke grant",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/grants/{{grantId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Access matrix",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/matrix"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

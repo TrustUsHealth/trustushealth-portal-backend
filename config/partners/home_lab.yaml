@@ -1,0 +1,4 @@
+key: home_lab
+name: Home Lab
+enabled_in: [patient_registry]
+parser: manual          # no report reading, manual entry only

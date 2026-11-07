@@ -1,0 +1,21 @@
+# The standard field list (PRD section 8). Nothing else is stored on an entry.
+fields:
+  - { key: bill_no,           label: Bill No,           type: text,      auto: true }
+  - { key: patient_name,      label: Patient Name,      type: text,      required_in: [patient_registry, bill_generator] }
+  - { key: age,               label: Age,               type: number }
+  - { key: age_unit,          label: Age Unit,          type: enum,      options: [Y, M, D] }
+  - { key: gender,            label: Gender,            type: enum,      options: [Male, Female, Other] }
+  - { key: lab_pid,           label: Patient ID,        type: text }
+  - { key: referred_by,       label: Referred By,       type: text }
+  - { key: registration_date, label: Registration Date, type: date,      required_in: [patient_registry, bill_generator] }
+  - { key: collection_time,   label: Collection Time,   type: datetime }
+  - { key: reporting_time,    label: Reporting Time,    type: datetime }
+  - { key: tests,             label: Tests,             type: text_list, required_in: [bill_generator] }
+  - { key: partner_key,       label: Laboratory,        type: text,      required_in: [patient_registry, bill_generator, reports] }
+  - { key: phone,             label: Phone,             type: text }
+  - { key: email,             label: Email,             type: text }
+  - { key: lab_cost,          label: Lab Cost,          type: money,     required_in: [bill_generator], internal: true }
+  - { key: gross_amount,      label: Gross Amount,      type: money,     required_in: [bill_generator] }
+  - { key: discount_amount,   label: Discount,          type: money,     default: 0 }
+  - { key: net_amount,        label: Billed Amount,     type: money,     computed: true }   # gross - discount
+  - { key: margin,            label: Margin,            type: money,     computed: true, internal: true, admin_only: true }   # net - lab_cost

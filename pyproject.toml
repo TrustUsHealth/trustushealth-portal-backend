@@ -1,0 +1,48 @@
+[project]
+name = "trustushealth-portal-backend"
+version = "0.1.0"
+description = "TrustUs Health Portal: backend (FastAPI)"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic[email]>=2.9",
+  "pydantic-settings>=2.5",
+  "pyyaml>=6.0",
+  "tzdata>=2024.1",
+  "pymongo>=4.13",          # async API (AsyncMongoClient)
+  "pyjwt>=2.9",
+  "httpx>=0.27",            # Resend
+  "sentry-sdk[fastapi]>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.24",
+  "mongomock-motor>=0.0.34",   # in-memory MongoDB for unit tests
+  "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:mongomock"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Cookie", "fastapi.Query", "fastapi.security.HTTPBearer"]
