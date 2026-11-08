@@ -1,0 +1,25 @@
+key: metropolis
+name: Metropolis Healthcare
+enabled_in: [patient_registry, reports]      # add bill_generator when bills are needed
+
+detect:
+  sender_domains: [example-metropolis.com]
+  text_contains_all: ["VID No.", "PID No."]
+  filename_hint: '^Report-\d+_'
+
+datetime_formats: ["%d/%m/%Y %I:%M %p", "%d/%m/%Y %I:%M%p"]   # day first; "4:11PM" has no space
+
+header:
+  patient_name:      { label: "Name" }                # "Mr. RAMESH GADA"
+  age_gender:        { label: "Age / Gender" }        # "52 Year(s)/ Male"
+  phone:             { label: "Contact No." }         # blank in sample; saved when present
+  lab_pid:           { label: "PID No." }             # "P39326581861483"
+  referred_by:       { label: "Referred by" }         # "DR.JATIN KOTHARI"
+  registration_date: { label: "Registered On", type: date }
+  collection_time:   { label: "Collected On",  type: datetime }
+  reporting_time:    { label: "Reported On",   type: datetime }
+extra_labels: ["VID No.", "Address", "Pin code"]     # read for audit only, not saved as fields
+
+tests:
+  source: investigation_column   # bold names under "Investigation"; the grey line in brackets
+                                 # (specimen, method) is ignored

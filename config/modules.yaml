@@ -1,0 +1,63 @@
+# Module registry. A module is live once its backend folder exists AND it is listed here.
+# `tile: false` keeps a module off the dashboard (auth is the login flow, not a tile).
+modules:
+  - key: auth
+    name: Login
+    icon: log-in
+    tile: false
+    visible_to_staff: true
+    roles: [admin, staff, engineer]
+
+  - key: access
+    name: Access Portal
+    icon: shield-check
+    visible_to_staff: false
+    roles: [admin]
+
+  - key: patient_registry
+    name: Patient Registry
+    icon: clipboard-list
+    visible_to_staff: true
+    roles: [admin, staff]
+    lab_aware: true                   # labs become submodules automatically
+    submodules:
+      - { key: entries,        name: Entries }
+      - { key: excel_register, name: Excel Register }
+
+  - key: bill_generator
+    name: Bill Generator
+    icon: receipt
+    visible_to_staff: true
+    roles: [admin, staff]
+    lab_aware: true
+
+  - key: reports
+    name: Reports
+    icon: file-text
+    visible_to_staff: true
+    roles: [admin, staff]
+    lab_aware: true
+
+  - key: delivery
+    name: Online Delivery
+    icon: send
+    visible_to_staff: true
+    roles: [admin, staff]
+    submodules:
+      - { key: email,    name: Email }
+      - { key: whatsapp, name: WhatsApp }
+
+  - key: logs
+    name: Logs
+    icon: scroll-text
+    visible_to_staff: false
+    roles: [admin, engineer]
+    submodules:
+      - { key: staff_logs,    name: Staff Logs }
+      - { key: customer_logs, name: Customer Logs }
+
+  - key: analytics
+    name: Staff Analytics
+    icon: bar-chart-3
+    visible_to_staff: true
+    roles: [admin, staff]

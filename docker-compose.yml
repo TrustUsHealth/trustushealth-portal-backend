@@ -1,0 +1,34 @@
+# Local full stack: API + MongoDB + Mailpit (catches OTP emails at http://localhost:8025).
+# Works with no .env at all; copy .env.example to .env to change values.
+services:
+  app:
+    build: .
+    ports: ["8000:8000"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ENVIRONMENT: local
+      MONGODB_URI: mongodb://mongo:27017
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-only-secret-change-me-0123456789}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@example.com}
+    volumes:            # live reload while developing
+      - ./app:/srv/app
+      - ./config:/srv/config
+    command: ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on: [mongo, mailpit]
+
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongo-data:/data/db]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+volumes:
+  mongo-data:
