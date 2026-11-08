@@ -10,9 +10,9 @@ services:
     environment:
       ENVIRONMENT: local
       MONGODB_URI: mongodb://mongo:27017
-      MAIL_TRANSPORT: smtp
-      SMTP_HOST: mailpit
-      SMTP_PORT: "1025"
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-smtp}
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
       JWT_SECRET: ${JWT_SECRET:-local-dev-only-secret-change-me-0123456789}
       BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@example.com}
     volumes:            # live reload while developing

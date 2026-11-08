@@ -12,6 +12,7 @@ from pathlib import Path
 os.environ.setdefault("MONGODB_URI", "mongodb://localhost:27017")  # never connected to
 os.environ.setdefault("JWT_SECRET", "x" * 32)
 os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("MAIL_TRANSPORT", "smtp")  # OpenAPI generation never sends email
 
 from app.main import create_app  # noqa: E402
 

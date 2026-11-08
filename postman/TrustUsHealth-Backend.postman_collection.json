@@ -84,7 +84,7 @@
     },
     {
       "name": "Auth",
-      "description": "Request an OTP, retrieve it from Mailpit/Resend, then set otpCode and verify. The verify script saves accessToken; the refresh cookie is stored by Postman's cookie jar.",
+      "description": "Request an OTP, retrieve it from Mailpit/Gmail, then set otpCode and verify. The verify script saves accessToken; the refresh cookie is stored by Postman's cookie jar.",
       "item": [
         {
           "name": "Request OTP",
@@ -106,7 +106,7 @@
               }
             },
             "url": "{{baseUrl}}/api/v1/auth/otp/request",
-            "description": "202 is returned whether or not the account exists. Check Mailpit or the Resend delivery dashboard for the actual message."
+            "description": "202 is returned whether or not the account exists. Check Mailpit or the Gmail inbox for the actual message."
           },
           "response": [],
           "auth": {

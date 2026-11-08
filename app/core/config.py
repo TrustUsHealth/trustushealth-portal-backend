@@ -12,7 +12,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     bootstrap_admin_email: EmailStr | None = None
     config_dir: Path = Path("config")
 
-    mail_transport: Literal["smtp", "resend"] = "smtp"
-    mail_from: str = "TrustUs Health <no-reply@localhost>"
+    mail_transport: Literal["smtp", "gmail"] = "smtp"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
-    resend_api_key: str | None = None
+    gmail_address: EmailStr | None = None
+    gmail_app_password: SecretStr | None = None
 
     job_secret: str | None = Field(default=None, min_length=24)
     admin_report_emails: str | None = None
@@ -57,9 +57,12 @@ class Settings(BaseSettings):
         return self.environment == "production"  # plain http is only allowed for local/test
 
     @model_validator(mode="after")
-    def _resend_needs_key(self) -> Settings:
-        if self.mail_transport == "resend" and not self.resend_api_key:
-            raise ValueError("RESEND_API_KEY is required when MAIL_TRANSPORT=resend")
+    def _gmail_needs_credentials(self) -> Settings:
+        if self.mail_transport == "gmail":
+            if not self.gmail_address:
+                raise ValueError("GMAIL_ADDRESS is required when MAIL_TRANSPORT=gmail")
+            if not self.gmail_app_password or not self.gmail_app_password.get_secret_value().strip():
+                raise ValueError("GMAIL_APP_PASSWORD is required when MAIL_TRANSPORT=gmail")
         return self
 
 

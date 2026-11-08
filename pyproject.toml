@@ -12,7 +12,6 @@ dependencies = [
   "tzdata>=2024.1",
   "pymongo>=4.13",          # async API (AsyncMongoClient)
   "pyjwt>=2.9",
-  "httpx>=0.27",            # Resend
   "sentry-sdk[fastapi]>=2.0",
 ]
 
@@ -20,6 +19,7 @@ dependencies = [
 dev = [
   "pytest>=8",
   "pytest-asyncio>=0.24",
+  "httpx>=0.27",            # FastAPI test client
   "mongomock-motor>=0.0.34",   # in-memory MongoDB for unit tests
   "ruff>=0.6",
 ]

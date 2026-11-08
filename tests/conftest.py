@@ -9,6 +9,7 @@ from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
 from app.core.db import utcnow
+from app.core.mailer import OutboundEmail
 from app.main import create_app
 
 API = "/api/v1"
@@ -18,8 +19,11 @@ class FakeMailer:
     def __init__(self):
         self.sent: list[dict] = []
 
-    async def send(self, to: str, subject: str, body: str) -> None:
-        self.sent.append({"to": to, "subject": subject, "body": body})
+    async def send_email(self, email: OutboundEmail) -> None:
+        self.sent.append({"to": email.to, "subject": email.subject, "body": email.text or email.html or ""})
+
+    async def send_email_in_background(self, email: OutboundEmail) -> None:
+        await self.send_email(email)
 
     def last_code(self, email: str) -> str:
         mails = [m for m in self.sent if m["to"] == email]

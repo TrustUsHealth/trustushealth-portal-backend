@@ -21,6 +21,8 @@ module's folder lands, it mounts and its tile appears with no other change.
 Implemented API functionality:
 
 - Email one-time-password (OTP) sign-in for invited Admin, Staff, and Engineer accounts.
+- OTPs are hashed in storage, expire after five minutes, are single-use, and have per-email and per-IP request limits;
+  the response does not disclose whether an address is registered.
 - Short-lived bearer access tokens and rotating refresh tokens in an HttpOnly cookie; logout revokes the session.
 - Bootstrap of one Admin account using `BOOTSTRAP_ADMIN_EMAIL`.
 - Admin APIs for users/invitations, module visibility, access requests and grants, plus an access matrix.
@@ -29,13 +31,14 @@ Implemented API functionality:
 
 The backend folders for `patient_registry`, `bill_generator`, `reports`, `delivery`, `logs`, and `analytics` do not
 exist yet. Their YAML registry entries are placeholders: they do not mean those APIs or workflows are implemented.
-Gmail intake, WhatsApp delivery, bill/report processing, and scheduled jobs are also not available yet. Sentry can be
-configured, but monitoring is optional.
+Gmail intake, WhatsApp delivery, PDF generation/sending workflows, bill/report processing, and scheduled jobs are also
+not available yet. The email service already accepts PDF attachments for future use, but no current feature generates
+or sends them. Sentry can be configured, but monitoring is optional.
 
 ## Requirements
 
 - Python 3.12 or Docker Desktop with Docker Compose.
-- For real integration testing: a MongoDB/Atlas database and a Resend account with a verified sender domain.
+- For real integration testing: a MongoDB/Atlas database and a Gmail account with 2-Step Verification enabled.
 
 ## Option A: run the local demo stack
 
@@ -46,7 +49,7 @@ docker compose up --build
 ```
 
 Compose starts the API (`http://localhost:8000`), MongoDB (`localhost:27017`), and Mailpit (`http://localhost:8025`).
-Mailpit captures OTP emails locally; no Resend account or `.env` is needed. By default the local bootstrap Admin is
+Mailpit captures OTP emails locally; no Gmail account or `.env` is needed. By default the local bootstrap Admin is
 `admin@example.com`. To change it, set `BOOTSTRAP_ADMIN_EMAIL` in `.env` (copy `.env.example` first), then restart the
 stack. Compose data is stored in the `mongo-data` Docker volume.
 
@@ -61,10 +64,11 @@ stack. Compose data is stored in the `mongo-data` Docker volume.
 Stop with `Ctrl+C`; run `docker compose down` to stop and remove containers. This preserves the database volume.
 To also reset local demo data, run `docker compose down --volumes` (this deletes the named MongoDB data volume).
 
-## Option B: use your real MongoDB and Resend accounts
+## Option B: use your real MongoDB and Gmail account
 
 This is the recommended way to test actual third-party connections. Run the API directly on your machine so Compose's
-local MongoDB and Mailpit environment overrides do not replace the real integration settings.
+local MongoDB and Mailpit settings do not replace your Atlas/Gmail settings. Alternatively, Compose can use Gmail
+when `MAIL_TRANSPORT=gmail` is set in `.env`.
 
 ### MongoDB Atlas
 
@@ -74,15 +78,27 @@ local MongoDB and Mailpit environment overrides do not replace the real integrat
 3. Copy the Atlas `mongodb+srv://...` connection string. Replace its username/password placeholders, URL-encode
    reserved characters in credentials, and include the database name if needed.
 
-### Resend
+### Gmail SMTP App Password
 
-1. Verify a domain in Resend and create an API key with permission to send email.
-2. Use a `MAIL_FROM` address on that verified domain. For a first live test, make sure the recipient address is allowed
-   by your Resend account's verification/testing restrictions.
+For this personal, low-volume sender, the backend uses Gmail SMTP over TLS on `smtp.gmail.com:465`. This is simpler to
+operate than Gmail API OAuth for a single sending account and requires no custom domain, OAuth client, or billing
+account. It supports text/HTML and file attachments. Gmail enforces its own sending limits and anti-abuse rules; this
+is not suitable for bulk or marketing mail.
+
+1. In your Google Account, enable **2-Step Verification**.
+2. Create an **App Password** in Google Account security settings. Google may hide this option for some account types
+   or security configurations.
+3. Use your Gmail address and the generated App Password below (paste the 16 characters without spaces). Do not use
+   your normal Google password. Store the App Password only in `.env` locally or in the deployment platform's secret
+   settings; revoke it in Google if exposed.
+
+The password is sent only to Gmail's SMTP server over TLS. The application strips spaces from Google's displayed
+16-character App Password before login. Gmail credentials are not used in the frontend.
 
 ### Run the API against those services (Windows PowerShell)
 
 ```powershell
+# Only for a new checkout that does not already have a .env:
 Copy-Item .env.example .env
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
@@ -97,22 +113,30 @@ MONGODB_URI=mongodb+srv://<db-user>:<url-encoded-password>@<cluster-host>/<datab
 MONGODB_DB=trustushealth
 JWT_SECRET=<a-random-secret-at-least-32-characters>
 BOOTSTRAP_ADMIN_EMAIL=<an-inbox-you-can-read>
-MAIL_TRANSPORT=resend
-RESEND_API_KEY=<your-resend-api-key>
-MAIL_FROM=TrustUs Health <no-reply@your-verified-domain.example>
+MAIL_TRANSPORT=gmail
+GMAIL_ADDRESS=<your-gmail-address@gmail.com>
+GMAIL_APP_PASSWORD=<your-google-app-password>
 ```
 
-Generate a secret rather than using the example value, and never commit `.env` or share its contents. Start the server:
+If `.env` already exists, edit it in place instead of overwriting it. Remove the old `RESEND_API_KEY` and any obsolete
+`MAIL_FROM`/`MAIL_TRANSPORT=resend` values; set `MAIL_TRANSPORT=gmail` and the Gmail variables above. An existing
+`MAIL_TRANSPORT=resend` is no longer valid. If a Resend API key was previously configured, revoke it at its provider.
+
+Generate a secret rather than using the example value. `.env` is ignored by Git; do not commit it, paste its contents
+into chat, or add credentials to Postman. The `Settings` class loads these values from environment variables / `.env`;
+when deploying, configure them as platform secrets instead of uploading `.env`. Verify that the hosting provider allows
+outbound TCP to Gmail SMTP on port 465 before deploying. Start the server:
 
 ```powershell
 .\.venv\Scripts\uvicorn.exe app.main:create_app --factory --host 127.0.0.1 --port 8000 --reload
 ```
 
 The first startup creates the bootstrap Admin if that email is not already registered. Request an OTP for that exact
-address, check the Resend delivery/events and the destination inbox, then verify the code. `GET /healthz` is deliberately
-cheap and does not prove MongoDB or email connectivity: successful OTP request/verification exercises MongoDB, and
-receiving the OTP exercises Resend. The API currently catches/logs mail transport failures, so an OTP request returning
-`202` alone does **not** prove that email was delivered; check the application logs and Resend dashboard too.
+address, check the destination inbox (and application logs), then verify the code. `GET /healthz` is deliberately cheap
+and does not prove MongoDB or email connectivity: successful OTP request/verification exercises MongoDB, and receiving
+the OTP exercises Gmail. OTP delivery runs as a FastAPI background task; the request's `202` response does **not**
+guarantee delivery. Transient SMTP/network errors are retried up to two times with short delays, then logged without
+the recipient, message, OTP, or credentials. There is no durable queue or retry after the process exits.
 
 Keep `ENVIRONMENT=local` for local HTTP testing; production enables secure cookies and disables Swagger docs. Never
 expose a production deployment over plain HTTP.
@@ -124,7 +148,7 @@ expose a production deployment over plain HTTP.
 - Postman collection: [`postman/TrustUsHealth-Backend.postman_collection.json`](postman/TrustUsHealth-Backend.postman_collection.json)
 - Health check: `GET http://localhost:8000/healthz`
 - In Postman, set `baseUrl` to `http://localhost:8000`. Run **Auth → Request OTP**, obtain the code from Mailpit or
-  Resend, then run **Auth → Verify OTP**. Its test script saves `accessToken`; the collection uses it for protected
+  Gmail, then run **Auth → Verify OTP**. Its test script saves `accessToken`; the collection uses it for protected
   requests. Keep the same hostname (`localhost` versus `127.0.0.1`) across requests so the refresh cookie is retained.
 - Useful checks: current identity (`/auth/me`), available dashboard tiles (`/me/modules`), app settings (`/config/app`),
   Admin users/modules (`/access/users`, `/access/modules`), pending requests (`/access/requests`), and grants matrix
@@ -150,7 +174,7 @@ With Python 3.12 and the development dependencies installed:
 ```
 
 Or run the same project checks with `make check` in an environment that has Make and Python 3.12 installed. Tests use an
-in-memory MongoDB and a fake mailer; they do not verify Atlas or Resend credentials/delivery.
+in-memory MongoDB and a fake mailer; they do not verify Atlas or Gmail credentials/delivery.
 
 ## Configuration and layout
 

@@ -88,7 +88,7 @@ async def test_new_code_invalidates_the_previous_one(portal):
     assert (await verify(portal, "sam@example.com", second)).status_code == 200
 
 
-async def test_resend_cooldown_60_seconds(portal):
+async def test_otp_resend_cooldown_60_seconds(portal):
     portal.set_cooldown(60)
     await portal.add_user("sam@example.com")
     await request(portal, "sam@example.com")

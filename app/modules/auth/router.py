@@ -4,7 +4,7 @@ from app.core import audit
 from app.core.config import PortalConfig, Settings
 from app.core.db import utcnow
 from app.core.deps import CurrentUser, get_config, get_current_user, get_db, get_mailer, get_settings
-from app.core.mailer import Mailer
+from app.core.mailer import Mailer, OutboundEmail
 from app.core.security import normalize_email, rate_limit
 from app.modules.auth import service
 from app.modules.auth.schemas import OtpRequestedOut, OtpRequestIn, OtpVerifyIn, TokenOut, UserOut
@@ -61,7 +61,12 @@ async def request_otp(
         fmt = {"brand": cfg.app.brand.name, "code": decision.code, "minutes": cfg.app.auth.otp.expires_minutes}
         # Sent in the background so response time does not reveal whether the email exists.
         background.add_task(
-            mailer.send, normalize_email(body.email), mail.subject.format(**fmt), mail.body.format(**fmt)
+            mailer.send_email_in_background,
+            OutboundEmail(
+                to=normalize_email(body.email),
+                subject=mail.subject.format(**fmt),
+                text=mail.body.format(**fmt),
+            ),
         )
     await audit.record(
         request,
