@@ -77,6 +77,1546 @@
         "title": "AppConfigOut",
         "type": "object"
       },
+      "Body_patient_registry_parse_entry_report": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partner_key",
+          "file"
+        ],
+        "title": "Body_patient_registry_parse_entry_report",
+        "type": "object"
+      },
+      "CustomerDetailOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "entries": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EntrySummaryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "CustomerDetailOut",
+        "type": "object"
+      },
+      "CustomerListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "CustomerListOut",
+        "type": "object"
+      },
+      "CustomerOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "CustomerOut",
+        "type": "object"
+      },
+      "DuplicateDecisionOut": {
+        "description": "409 body: staff must choose before anything is saved (PRD 6.2).",
+        "properties": {
+          "can_force_new": {
+            "default": true,
+            "title": "Can Force New",
+            "type": "boolean"
+          },
+          "conflicts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FieldConflictOut"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
+          "match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntrySummaryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "possible_match",
+              "conflict"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "possible_matches": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/EntrySummaryOut"
+            },
+            "title": "Possible Matches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "message"
+        ],
+        "title": "DuplicateDecisionOut",
+        "type": "object"
+      },
+      "DuplicateHintOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntrySummaryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "exact",
+              "possible"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "entries"
+        ],
+        "title": "DuplicateHintOut",
+        "type": "object"
+      },
+      "EntryCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 130.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "collection_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Time"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "force_new": {
+            "default": false,
+            "description": "'This is a different patient'",
+            "title": "Force New",
+            "type": "boolean"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "gross_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Amount"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "patient_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Report stored by /entries/parse, to link to the entry",
+            "title": "Report Id"
+          },
+          "reporting_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Time"
+          },
+          "resolutions": {
+            "additionalProperties": {
+              "enum": [
+                "existing",
+                "incoming",
+                "both"
+              ],
+              "type": "string"
+            },
+            "description": "Per-field choice on conflicts",
+            "title": "Resolutions",
+            "type": "object"
+          },
+          "target_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Entry chosen from a possible-match list",
+            "title": "Target Entry Id"
+          },
+          "tests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tests"
+          }
+        },
+        "required": [
+          "patient_name",
+          "registration_date",
+          "partner_key"
+        ],
+        "title": "EntryCreateIn",
+        "type": "object"
+      },
+      "EntryDetailOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "bill_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No"
+          },
+          "collection_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Time"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "gross_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Amount"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "margin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Admin only; null for everyone else",
+            "title": "Margin"
+          },
+          "net_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Amount"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "partner_name": {
+            "title": "Partner Name",
+            "type": "string"
+          },
+          "patient_name": {
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "reporting_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Time"
+          },
+          "reports": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ReportRefOut"
+            },
+            "title": "Reports",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tests": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "bill_no",
+          "status",
+          "partner_key",
+          "patient_name",
+          "registration_date",
+          "version",
+          "partner_name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EntryDetailOut",
+        "type": "object"
+      },
+      "EntryListOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EntrySummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "EntryListOut",
+        "type": "object"
+      },
+      "EntryOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "bill_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No"
+          },
+          "collection_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Time"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Id"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "gross_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Amount"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "margin": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Admin only; null for everyone else",
+            "title": "Margin"
+          },
+          "net_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Amount"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "partner_name": {
+            "title": "Partner Name",
+            "type": "string"
+          },
+          "patient_name": {
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "reporting_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Time"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tests": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "bill_no",
+          "status",
+          "partner_key",
+          "patient_name",
+          "registration_date",
+          "version",
+          "partner_name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EntryOut",
+        "type": "object"
+      },
+      "EntryPatchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 130.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "collection_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Time"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "gross_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Amount"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "patient_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Date"
+          },
+          "reporting_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Time"
+          },
+          "tests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tests"
+          }
+        },
+        "title": "EntryPatchIn",
+        "type": "object"
+      },
+      "EntrySummaryOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "bill_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "net_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Amount"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "patient_name": {
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tests": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "bill_no",
+          "status",
+          "partner_key",
+          "patient_name",
+          "registration_date"
+        ],
+        "title": "EntrySummaryOut",
+        "type": "object"
+      },
+      "FieldConflictOut": {
+        "properties": {
+          "existing": {
+            "title": "Existing"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "incoming": {
+            "title": "Incoming"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "label",
+          "existing",
+          "incoming"
+        ],
+        "title": "FieldConflictOut",
+        "type": "object"
+      },
+      "FieldOut": {
+        "properties": {
+          "auto": {
+            "default": false,
+            "title": "Auto",
+            "type": "boolean"
+          },
+          "computed": {
+            "default": false,
+            "title": "Computed",
+            "type": "boolean"
+          },
+          "default": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default"
+          },
+          "internal": {
+            "default": false,
+            "title": "Internal",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Options"
+          },
+          "required": {
+            "default": false,
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "title": "FieldOut",
+        "type": "object"
+      },
       "GrantIn": {
         "properties": {
           "module": {
@@ -232,6 +1772,34 @@
           "role"
         ],
         "title": "InviteIn",
+        "type": "object"
+      },
+      "JobOut": {
+        "properties": {
+          "failed": {
+            "default": 0,
+            "title": "Failed",
+            "type": "integer"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "sent": {
+            "default": 0,
+            "title": "Sent",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "month"
+        ],
+        "title": "JobOut",
         "type": "object"
       },
       "MatrixColumn": {
@@ -414,6 +1982,246 @@
         "title": "OtpVerifyIn",
         "type": "object"
       },
+      "ParseOut": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "duplicate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DuplicateHintOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "existing_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Entry Id"
+          },
+          "fields": {
+            "$ref": "#/components/schemas/ParsedFieldsOut"
+          },
+          "file_duplicate": {
+            "default": false,
+            "description": "This exact file was uploaded before",
+            "title": "File Duplicate",
+            "type": "boolean"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "flags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "missing_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Fields",
+            "type": "array"
+          },
+          "needs_verify": {
+            "default": [],
+            "description": "Fields to mark with the amber 'Please verify' icon",
+            "items": {
+              "type": "string"
+            },
+            "title": "Needs Verify",
+            "type": "array"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "report_id",
+          "filename",
+          "partner_key",
+          "fields",
+          "confidence"
+        ],
+        "title": "ParseOut",
+        "type": "object"
+      },
+      "ParsedFieldsOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "collection_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Time"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "patient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Date"
+          },
+          "reporting_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reporting Time"
+          },
+          "tests": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          }
+        },
+        "title": "ParsedFieldsOut",
+        "type": "object"
+      },
       "PartnerOut": {
         "properties": {
           "key": {
@@ -430,6 +2238,99 @@
           "name"
         ],
         "title": "PartnerOut",
+        "type": "object"
+      },
+      "ReportRefOut": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "content_type",
+          "size",
+          "status",
+          "created_at"
+        ],
+        "title": "ReportRefOut",
+        "type": "object"
+      },
+      "SaveOut": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/EntryOut"
+          },
+          "filled_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filled Fields",
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "created",
+              "merged",
+              "unchanged"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "report_link": {
+            "default": "none",
+            "enum": [
+              "linked",
+              "already_linked",
+              "missing",
+              "none"
+            ],
+            "title": "Report Link",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "entry"
+        ],
+        "title": "SaveOut",
+        "type": "object"
+      },
+      "SendOut": {
+        "properties": {
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sent"
+        ],
+        "title": "SendOut",
         "type": "object"
       },
       "SubmoduleOut": {
@@ -745,6 +2646,57 @@
           "visible_to_staff"
         ],
         "title": "VisibilityIn",
+        "type": "object"
+      },
+      "WorkbookOut": {
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "last_sent_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Sent Month"
+          },
+          "size": {
+            "title": "Size",
+            "type": "integer"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "filename",
+          "version",
+          "size"
+        ],
+        "title": "WorkbookOut",
         "type": "object"
       }
     },
@@ -1558,6 +3510,861 @@
         "summary": "My Modules",
         "tags": [
           "dashboard"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/customers": {
+      "get": {
+        "operationId": "patient_registry_list_customers_search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Customers Search",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/customers/{customer_id}": {
+      "get": {
+        "operationId": "patient_registry_get_customer_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customer_id",
+            "required": true,
+            "schema": {
+              "title": "Customer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Customer Detail",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/entries": {
+      "get": {
+        "operationId": "patient_registry_list_entries",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partner_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Partner Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^(draft|complete)$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "referred_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Referred By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bill_no",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 12,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bill No"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lab_pid",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lab Pid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 10000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryListOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Entries",
+        "tags": [
+          "patient_registry"
+        ]
+      },
+      "post": {
+        "description": "Save a new entry. The duplicate check runs first: an exact match is updated instead (201 -> 200), a possible\nmatch or field conflict returns 409 with what staff must decide.",
+        "operationId": "patient_registry_create_entry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntryCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateDecisionOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Entry",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/entries/parse": {
+      "post": {
+        "description": "Lab first, then upload. Reads the report with that lab's rules and stores it; the form is pre-filled from\n`fields` (low-confidence ones listed in `needs_verify`). Nothing is saved as an entry yet.",
+        "operationId": "patient_registry_parse_entry_report",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_patient_registry_parse_entry_report"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Parse Entry Report",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/entries/{entry_id}": {
+      "delete": {
+        "description": "Admin only. The bill number stays retired (never reused).",
+        "operationId": "patient_registry_delete_entry_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Entry Record",
+        "tags": [
+          "patient_registry"
+        ]
+      },
+      "get": {
+        "operationId": "patient_registry_get_entry_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryDetailOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Entry Detail",
+        "tags": [
+          "patient_registry"
+        ]
+      },
+      "patch": {
+        "description": "Edit the same record: same row in Excel, same bill_no. Send null to clear an optional field.",
+        "operationId": "patient_registry_update_entry_fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntryPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Entry Fields",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/excel_register": {
+      "get": {
+        "operationId": "patient_registry_list_workbook_years",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkbookOut"
+                  },
+                  "title": "Response Patient Registry List Workbook Years",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Workbook Years",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/excel_register/download": {
+      "get": {
+        "description": "'Download now': regenerated from the database first, so the file is always exact.",
+        "operationId": "patient_registry_download_workbook",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Workbook",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/excel_register/send": {
+      "post": {
+        "description": "Admin 'Send now': emails the current workbook to the configured recipients.",
+        "operationId": "patient_registry_send_workbook_now",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 2100,
+                  "minimum": 2000,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send Workbook Now",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/fields": {
+      "get": {
+        "operationId": "patient_registry_list_fields",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FieldOut"
+                  },
+                  "title": "Response Patient Registry List Fields",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Fields",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/jobs/excel_monthly": {
+      "post": {
+        "description": "Called by the GitHub Actions cron on the 1st at 06:00 IST. Safe to retry: a month is never sent twice.",
+        "operationId": "patient_registry_run_monthly_excel_job",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-job-secret",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Job-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Monthly Excel Job",
+        "tags": [
+          "patient_registry"
+        ]
+      }
+    },
+    "/api/v1/patient_registry/reports/{report_id}/file": {
+      "get": {
+        "operationId": "patient_registry_download_report_file",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "title": "Report Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Download",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Download Report File",
+        "tags": [
+          "patient_registry"
         ]
       }
     }
