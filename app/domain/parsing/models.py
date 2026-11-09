@@ -5,11 +5,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 _BOLD_HINTS = ("bold", "black", "heavy", "demi")
+_ITALIC_HINTS = ("italic", "oblique")
 
 
 def is_bold(font: str) -> bool:
     f = (font or "").casefold()
     return any(h in f for h in _BOLD_HINTS)
+
+
+def is_italic(font: str) -> bool:
+    f = (font or "").casefold()
+    return any(h in f for h in _ITALIC_HINTS)
+
+
+@dataclass(frozen=True, slots=True)
+class Box:
+    """An embedded image (for example the NABL seal printed beside accredited tests)."""
+
+    x0: float
+    x1: float
+    top: float
+    bottom: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,6 +92,7 @@ class Page:
     width: float
     height: float
     words: list[Word]
+    images: list[Box] = field(default_factory=list)
 
 
 @dataclass

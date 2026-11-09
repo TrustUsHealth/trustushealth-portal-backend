@@ -8,7 +8,7 @@ import os
 import re
 import zipfile
 
-from app.domain.parsing.models import DocxBlock, DocxDoc, Page, PdfDoc, Word
+from app.domain.parsing.models import Box, DocxBlock, DocxDoc, Page, PdfDoc, Word
 
 log = logging.getLogger(__name__)
 MAX_PAGES = 40
@@ -94,7 +94,14 @@ def _read_pdfplumber(data: bytes) -> tuple[list[Page], bool]:
                 for w in raw
                 if w["text"].strip()
             ]
-            pages.append(Page(idx + 1, float(p.width), float(p.height), words))
+            images: list[Box] = []
+            try:
+                images = [
+                    Box(float(im["x0"]), float(im["x1"]), float(im["top"]), float(im["bottom"])) for im in p.images
+                ]
+            except Exception:  # noqa: BLE001 - images are only a bonus signal
+                images = []
+            pages.append(Page(idx + 1, float(p.width), float(p.height), words, images))
     return pages, truncated
 
 
@@ -115,8 +122,27 @@ def _read_pymupdf(data: bytes) -> tuple[list[Page], bool]:
                 for w in page.get_text("words")
                 if str(w[4]).strip()
             ]
-            pages.append(Page(idx + 1, float(page.rect.width), float(page.rect.height), words))
+            images: list[Box] = []
+            try:
+                images = [Box(b[0], b[2], b[1], b[3]) for b in (i["bbox"] for i in page.get_image_info())]
+            except Exception:  # noqa: BLE001
+                images = []
+            pages.append(Page(idx + 1, float(page.rect.width), float(page.rect.height), words, images))
     return pages, truncated
+
+
+def _supplement_images(data: bytes, pages: list[Page]) -> None:
+    """pdfplumber found no images at all: ask PyMuPDF too (it sees images pdfplumber can miss)."""
+    try:
+        import pymupdf
+
+        with pymupdf.open(stream=data, filetype="pdf") as doc:
+            for idx, page in enumerate(doc):
+                if idx >= len(pages):
+                    break
+                pages[idx].images = [Box(b[0], b[2], b[1], b[3]) for b in (i["bbox"] for i in page.get_image_info())]
+    except Exception:  # noqa: BLE001
+        log.debug("image supplement skipped")
 
 
 def read_pdf(data: bytes) -> PdfDoc:
@@ -137,6 +163,8 @@ def read_pdf(data: bytes) -> PdfDoc:
             pages, truncated, source = fb_pages, fb_trunc, "pymupdf"
     if not pages:
         raise UnreadableFile("This PDF could not be read. It may be damaged or password-protected.")
+    if source == "pdf" and not any(p.images for p in pages):
+        _supplement_images(data, pages)
     return PdfDoc(pages=pages, source=source, truncated=truncated)
 
 

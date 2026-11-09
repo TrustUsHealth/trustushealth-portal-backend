@@ -2,8 +2,9 @@
 
 PDF: words with positions are grouped into lines; labels (from the partner YAML) are matched by text, never by line
 order, so two-column headers work. Values stop at the next label or at a wide gap (column break).
-Tests: `page_heading` (centred bold heading per page) or `investigation_column` (bold names in the Investigation
-column, rows recognised by a value in the next column).
+Tests: `page_heading` (centred bold heading per page) or `investigation_column` (see `_scan_rows`: a test is a row
+with the NABL icon, or a bold row followed by a specimen line, or a bold profile title; components inside a profile
+and text blocks are never tests).
 """
 
 from __future__ import annotations
@@ -15,36 +16,82 @@ from typing import Any
 
 from app.core.config import HeaderField, PartnerCfg, PortalConfig
 from app.domain.parsing import standardize as std
-from app.domain.parsing.models import DocxDoc, Line, Page, Word, is_bold
+from app.domain.parsing.models import DocxDoc, Line, Page, Word, is_bold, is_italic
 from app.domain.parsing.readers import detect_kind, read_docx, read_pdf
 
 log = logging.getLogger(__name__)
 
 HEADER_FRACTION = 0.40  # patient-details block = top 40% of the page
+FOOTER_FRACTION = 0.86  # signatures, accreditation logos and the lab footer sit below this line
 LINE_TOL = 3.5
 VALUE_GAP_FIRST = 24.0  # colon -> first value word
 VALUE_GAP = 18.0  # between value words; a wider gap is a column break
 COLUMN_GAP = 18.0
+NAME_GAP = 4.5  # words closer than this belong to the same name; the value column is always further away
+ICON_MAX = 28.0  # accreditation seal is a small image, in points
+ICON_MAX_DY = 9.0  # vertical distance between the seal and the row it belongs to
 VERIFY_BELOW = 0.8
 SCORED = {"patient_name", "registration_date", "age", "gender", "lab_pid", "tests"}
 COMPOSITE = {"age_gender": ("age", "age_unit", "gender")}
+# Lines starting like this begin a text block (notes, interpretation...). Nothing inside it is a test.
 STOP_PREFIXES = (
     "interpretation",
+    "test interpretation",
     "medical remarks",
     "remark",
     "note",
     "comment",
+    "disclaimer",
+    "associated",
+    "clinical",
+    "reference",
+    "pre-test",
     "end of report",
     "-- end",
     "** end",
     "*** end",
+    "**",
     "kindly",
-    "clinical",
     "page",
     "method",
-    "disclaimer",
+)
+# First part of the grey "(Specimen, Method)" line printed under a real test name.
+SPECIMENS = (
+    "serum",
+    "plasma",
+    "urine",
+    "blood",
+    "whole blood",
+    "edta",
+    "fluoride",
+    "citrate",
+    "heparin",
+    "csf",
+    "cerebrospinal fluid",
+    "stool",
+    "swab",
+    "sputum",
+    "saliva",
+    "semen",
+    "body fluid",
+    "pleural fluid",
+    "ascitic fluid",
+    "synovial fluid",
+    "tissue",
+    "biopsy",
+    "smear",
+    "pus",
+    "bone marrow",
+    "cord blood",
+    "dried blood spot",
+    "nasopharyngeal",
+    "throat",
+    "nasal",
+    "hair",
+    "nail",
 )
 _END_RE = re.compile(r"^\W*end of report", re.I)
+_LIST_RE = re.compile(r"^\s*(?:\d+[.)]|[\u2022\u00b7\u25aa\u25cf])\s*")
 
 
 class ParseError(Exception):
@@ -75,7 +122,7 @@ class ParseResult:
         )
 
     def stored(self) -> dict[str, Any]:
-        """The `parse` sub-document saved with a report (PRD 9)."""
+        """The `parse` sub-document saved with a report."""
         return {
             "source": self.source,
             "confidence": self.confidence,
@@ -315,7 +362,7 @@ def _read_header(
     return fields, conf, warnings, missing_labels
 
 
-# ───────────────────────────── tests: page_heading ─────────────────────────────
+# ───────────────────────────── tests: page_heading (Spectrum; unchanged) ─────────────────────────────
 def _is_heading(ln: Line, v: _View) -> bool:
     page, text = v.page, ln.text.strip()
     if len(text) < 3 or not re.search(r"[A-Za-z]", text) or _END_RE.match(text):
@@ -342,11 +389,21 @@ def _heading_for(v: _View) -> str | None:
     return None
 
 
-# ───────────────────────────── tests: investigation_column ─────────────────────────────
+# ───────────────────────────── tests: investigation_column (Metropolis) ─────────────────────────────
 @dataclass
 class _Columns:
     name: tuple[float, float]
     value: tuple[float, float] | None
+
+
+@dataclass
+class _Scan:
+    """State carried from page to page while reading the Investigation table."""
+
+    names: list[str] = field(default_factory=list)
+    in_profile: bool = False  # inside a profile (panel): rows below it are components, not tests
+    in_text: bool = False  # inside a notes / interpretation block
+    fallback: str | None = None  # first valued row, used only if nothing else qualifies
 
 
 def _columns(line: Line, anchor: Word, page: Page) -> _Columns:
@@ -369,50 +426,124 @@ def _is_stop(low: str) -> bool:
     return low.startswith(STOP_PREFIXES)
 
 
-def _investigation_rows(v: _View, start: int, cols: _Columns) -> list[str]:
+def _is_specimen(text: str) -> bool:
+    """'(Serum, NM-BAPTA)' -> True; '(Legals Test)' or '(Large Round Epithelial Cells)' -> False."""
+    head = re.split(r"[,)]", text.strip().lstrip("(").strip().casefold(), maxsplit=1)[0].strip()
+    return any(head == s or head.startswith(s + " ") for s in SPECIMENS)
+
+
+def _icon_line_indexes(v: _View, start: int, name_left: float) -> set[int]:
+    """Lines that have the accreditation seal (a small image) just left of the name column."""
+    out: set[int] = set()
+    for im in v.page.images:
+        w, h = im.x1 - im.x0, im.bottom - im.top
+        if not (3 <= w <= ICON_MAX and 3 <= h <= ICON_MAX) or im.x1 > name_left + 3 or im.x0 < 0:
+            continue
+        cy = (im.top + im.bottom) / 2
+        best, best_d = None, ICON_MAX_DY + 0.001
+        for i in range(start, len(v.lines)):
+            ln = v.lines[i]
+            d = abs(ln.cy - cy)
+            if d < best_d and ln.x0 >= name_left - 1:
+                best, best_d = i, d
+        if best is not None:
+            if v.lines[best].text.lstrip().startswith("(") and best > start:
+                best -= 1  # the seal is centred between the name and its grey line: it belongs to the name
+            out.add(best)
+    return out
+
+
+def _scan_rows(v: _View, start: int, cols: _Columns, st: _Scan) -> None:
+    """Decide which rows of the Investigation table are real tests.
+
+    A test is: (1) a row with the accreditation seal; (2) a bold row with a value whose next grey line starts with
+    a specimen (Serum, Urine...); (3) a bold, non-italic, valueless title that opens a profile. Components inside a
+    profile, italic section headings, notes and footers are never tests. A profile ends at the next seal or at a
+    specimen row at the top of a page (each Metropolis test starts a new page).
+    """
     strict = v.bold_present
     nb, vb = cols.name, cols.value
-    names: list[str] = []
-    last: Line | None = None
-    for ln in v.lines[start:]:
-        low = ln.text.strip().casefold()
-        if _is_stop(low):
-            last = None
-            if not strict:  # without font info a paragraph could look like a row: stop here
+    vb_right = vb[1] if vb else v.page.width * 0.6
+    icons = _icon_line_indexes(v, start, nb[0])
+    cutoff = v.page.height * FOOTER_FRACTION
+    lines = v.lines
+    first_row = True
+    last_ln: Line | None = None  # last accepted test line, to join a wrapped name
+
+    for i in range(start, len(lines)):
+        ln = lines[i]
+        if ln.cy > cutoff:
+            break
+        if _is_stop(ln.text.strip().casefold()) or _LIST_RE.match(ln.text):
+            st.in_text, last_ln = True, None
+            continue
+        ws = ln.words
+        s = next((k for k, w in enumerate(ws) if nb[0] <= w.x0 < nb[1]), None)
+        if s is None:
+            continue
+        cluster = [ws[s]]
+        for w in ws[s + 1 :]:
+            if w.x0 - cluster[-1].x1 < NAME_GAP:
+                cluster.append(w)
+            else:
                 break
+        rest = ws[s + len(cluster) :]
+        name = _clean_test_name(" ".join(w.text for w in cluster))
+        if not name or not re.search(r"[A-Za-z]", name):
             continue
-        nw = [w for w in ln.words if nb[0] <= w.x0 < nb[1]]
-        vw = [w for w in ln.words if vb and vb[0] <= w.x0 < vb[1]]
-        if not nw:
-            last = None
+        if name.startswith("("):  # grey method / specimen line
+            last_ln = None
             continue
-        name = " ".join(w.text for w in nw)
-        name_bold = all(is_bold(w.font) for w in nw) if strict else True
-        if vb:
-            is_row = bool(vw) and (strict or vw[0].x0 - max(w.x1 for w in nw) >= 6)
+
+        is_first, first_row = first_row, False
+        has_value = bool(vb) and any(vb[0] <= w.x0 < vb[1] for w in rest)
+        bold = all(is_bold(w.font) for w in cluster) if strict else True
+        italic = any(is_italic(w.font) for w in cluster)
+        icon = i in icons
+
+        if has_value:  # a row with a result
+            if not (bold or icon):
+                last_ln = None
+                continue
+            st.in_text = False
+            if st.fallback is None:
+                st.fallback = name
+            nxt = lines[i + 1] if i + 1 < len(lines) else None
+            specimen_next = (
+                nxt is not None
+                and nxt.text.lstrip().startswith("(")
+                and _is_specimen(nxt.text)
+                and nxt.cy - ln.cy <= 30
+            )
+            if icon or (specimen_next and (not st.in_profile or is_first)):
+                st.names.append(name)
+                st.in_profile, last_ln = False, ln
+            else:
+                last_ln = None  # a component of the current profile
+            continue
+
+        # no result on this line: a profile title, a wrapped name, a section heading or plain text
+        if rest or any(w.text == ":" for w in ws) or cluster[-1].x1 > vb_right:
+            last_ln = None
+            continue
+        if icon:
+            st.names.append(name)
+            st.in_profile, st.in_text, last_ln = True, False, ln
+            continue
+        adjacent = last_ln is not None and ln.top - last_ln.bottom <= 1.5 * (last_ln.bottom - last_ln.top)
+        if adjacent and strict and bold and not italic and st.names:
+            st.names[-1] = _clean_test_name(st.names[-1] + " " + name)
+            last_ln = ln
+        elif strict and bold and not italic and not st.in_profile and not st.in_text:
+            st.names.append(name)
+            st.in_profile, last_ln = True, ln
         else:
-            is_row = name_bold
-        if is_row and name_bold and not name.startswith("(") and re.search(r"[A-Za-z]", name):
-            names.append(_clean_test_name(name))
-            last = ln
-        elif (  # wrapped long test name: bold, in the name column only, directly under the previous row
-            strict
-            and last is not None
-            and name_bold
-            and not vw
-            and len(nw) == len(ln.words)
-            and not name.startswith("(")
-            and ln.top - last.bottom <= 1.5 * (last.bottom - last.top)
-        ):
-            names[-1] = _clean_test_name(names[-1] + " " + name)
-            last = ln
-        else:
-            last = None
-    return names
+            last_ln = None
 
 
-def _investigation_tests(views: list[_View]) -> list[str]:
-    out: list[str] = []
+def _investigation_tests(views: list[_View]) -> tuple[list[str], bool]:
+    """Returns (test names, used_fallback)."""
+    st = _Scan()
     cols: _Columns | None = None
     for v in views:
         anchor_idx, anchor = None, None
@@ -430,8 +561,10 @@ def _investigation_tests(views: list[_View]) -> list[str]:
             start = next((i for i, ln in enumerate(v.lines) if ln.cy > v.header_end), len(v.lines))
         else:
             continue
-        out += _investigation_rows(v, start, cols)
-    return out
+        _scan_rows(v, start, cols, st)
+    if not st.names and st.fallback:
+        return [st.fallback], True
+    return st.names, False
 
 
 # ───────────────────────────── assembling the result ─────────────────────────────
@@ -444,11 +577,11 @@ def _finish(res: ParseResult, partner: PartnerCfg) -> ParseResult:
     return res
 
 
-def _add_tests(res: ParseResult, names: list[str]) -> None:
+def _add_tests(res: ParseResult, names: list[str], confidence: float = 1.0) -> None:
     tests = std.clean_test_list(names)
     if tests:
         res.fields["tests"] = tests
-        res.field_confidence["tests"] = 1.0
+        res.field_confidence["tests"] = confidence
     else:
         res.field_confidence["tests"] = 0.0
         res.warnings.append("No test names were found. Please add them.")
@@ -483,9 +616,12 @@ def _parse_pdf(doc, partner: PartnerCfg, cfg: PortalConfig, labels: dict[str, st
     src = partner.tests.source if partner.tests else ""
     if src == "page_heading":
         names = [h for h in (_heading_for(v) for v in views) if h]
+        _add_tests(res, names)
     else:
-        names = _investigation_tests(views)
-    _add_tests(res, names)
+        names, used_fallback = _investigation_tests(views)
+        if used_fallback:
+            res.warnings.append("The test names could not be told apart reliably. Please verify the tests.")
+        _add_tests(res, names, confidence=0.6 if used_fallback else 1.0)
 
     idents = _page_idents(views, partner)
     if len(idents) > 1 and len({i for i in idents}) > 1:
