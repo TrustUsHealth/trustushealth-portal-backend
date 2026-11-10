@@ -1,0 +1,13 @@
+{
+  "partner_key": "metropolis",
+  "patient_name": "Ramesh Gada",
+  "age": 52,
+  "age_unit": "Y",
+  "gender": "Male",
+  "lab_pid": "P39326581861483",
+  "referred_by": "Dr. Jatin Kothari",
+  "registration_date": "2026-11-02",
+  "collection_time": "2026-11-02T16:11:00",
+  "reporting_time": "2026-11-02T18:01:00",
+  "tests": ["Creatinine, Serum"]
+}

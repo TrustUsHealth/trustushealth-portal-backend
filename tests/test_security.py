@@ -24,5 +24,7 @@ async def test_otp_endpoint_is_rate_limited_per_ip(portal):
 
 
 async def test_module_without_router_is_skipped_not_fatal(portal):
-    # patient_registry etc. are listed in modules.yaml but not built: the app still starts.
-    assert portal.app.state.mounted_modules == {"auth", "access"}
+    # modules listed in modules.yaml but not built yet are skipped; the app still starts.
+    mounted = portal.app.state.mounted_modules
+    assert {"auth", "access", "patient_registry"} <= mounted
+    assert "bill_generator" not in mounted

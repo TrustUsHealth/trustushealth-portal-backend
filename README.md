@@ -10,7 +10,7 @@ configuration and dashboard APIs, and the initial Access Portal. The product sco
 |---|---|---|
 | 0 | **Foundation** (this repo's part) | **Done:** config loader + validation, email-OTP login, RBAC, module auto-discovery, Access Portal API, dashboard tiles API, audit writing, Docker Compose, CI/CD |
 | 0 | Foundation (frontend repo, Render/Cloudflare setup) | Pending: separate repo / manual hosting setup |
-| 1 | `patient_registry` | Not started |
+| 1 | `patient_registry` | **Done (backend):** lab-first upload + manual entries, generic YAML parsing engine (Spectrum, Metropolis), standard field list, atomic `bill_no`, duplicate rules, customers, yearly Excel register with monthly send job |
 | 2-6 | `bill_generator`, `reports`, `delivery`, `logs`, `analytics` | Not started |
 
 Modules listed in `config/modules.yaml` but not yet built are skipped at startup and get no dashboard tile. When a
@@ -29,8 +29,12 @@ Implemented API functionality:
 - Dashboard tiles, public app/brand configuration, and access-controlled lab/partner configuration.
 - Audit events for authentication and access changes, YAML validation, OpenAPI generation, and `/healthz`.
 
-The backend folders for `patient_registry`, `bill_generator`, `reports`, `delivery`, `logs`, and `analytics` do not
-exist yet. Their YAML registry entries are placeholders: they do not mean those APIs or workflows are implemented.
+
+The backend folders for `bill_generator`, `reports`, `delivery`, `logs`, and `analytics` do not exist yet; their YAML
+registry entries are placeholders. `patient_registry` is live (`/api/v1/patient_registry`): `POST /entries/parse`
+(lab + file), `POST /entries` (duplicate check, merge/conflict decisions), `PATCH /entries/{id}`, search, customers,
+`/excel_register/*`, and `POST /jobs/excel_monthly` (header `X-Job-Secret`, called by the 1st-of-month cron).
+Parsing rules are YAML only: run `python -m scripts.check_samples` after editing `config/partners/*.yaml`.
 Gmail intake, WhatsApp delivery, PDF generation/sending workflows, bill/report processing, and scheduled jobs are also
 not available yet. The email service already accepts PDF attachments for future use, but no current feature generates
 or sends them. Sentry can be configured, but monitoring is optional.
@@ -101,8 +105,8 @@ The password is sent only to Gmail's SMTP server over TLS. The application strip
 # Only for a new checkout that does not already have a .env:
 Copy-Item .env.example .env
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+./.venv/Scripts/python.exe -m pip install --upgrade pip
+./.venv/Scripts/python.exe -m pip install -e ".[dev]"
 ```
 
 Edit `.env` and set at least:
@@ -128,7 +132,7 @@ when deploying, configure them as platform secrets instead of uploading `.env`. 
 outbound TCP to Gmail SMTP on port 465 before deploying. Start the server:
 
 ```powershell
-.\.venv\Scripts\uvicorn.exe app.main:create_app --factory --host 127.0.0.1 --port 8000 --reload
+./.venv/Scripts/uvicorn.exe app.main:create_app --factory --host 127.0.0.1 --port 8000 --reload
 ```
 
 The first startup creates the bootstrap Admin if that email is not already registered. Request an OTP for that exact
