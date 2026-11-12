@@ -1,7 +1,7 @@
 # Brand, timezone, currency, sessions, uploads, bill_no. Safe to edit via pull request.
 brand:
   name: TrustUs Health
-  logo_full: /brand/logo-full.svg     # portal UI only
+  logo_full: /brand/logo-full.svg     # portal UI; email PNG copy is app/core/assets/brand-logo.png
   logo_mark: /brand/logo-mark.svg
   favicon: /brand/favicon.ico
 timezone: Asia/Kolkata
@@ -13,8 +13,8 @@ upload:
   max_mb: 10
   allowed: [pdf, docx]
 bill_no:
-  digits: 6                           # 000001, 000002, ...
-  start: 1
+  digits: 6                           # 556701, 556702, ...
+  start: 556701                       # first bill number; the next issued number increments from here
 auth:
   otp:
     digits: 6

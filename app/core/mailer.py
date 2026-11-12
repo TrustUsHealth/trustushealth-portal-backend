@@ -7,11 +7,15 @@ import ssl
 from dataclasses import dataclass, field
 from email.message import EmailMessage as MimeMessage
 from email.utils import formataddr
+from pathlib import Path
 
 from app.core.config import Settings
+from app.core.email_templates import render_branded_email, text_to_html
 
 log = logging.getLogger(__name__)
 RETRY_DELAYS_SECONDS = (0.5, 1.0)
+LOGO_CONTENT_ID = "trustus-health-logo"
+LOGO_PATH = Path(__file__).with_name("assets") / "brand-logo.png"
 
 
 @dataclass(frozen=True)
@@ -26,6 +30,7 @@ class OutboundEmail:
     to: str
     subject: str
     text: str | None = None
+    # Optional trusted HTML body fragment; plain text is escaped and rendered when omitted.
     html: str | None = None
     attachments: tuple[EmailAttachment, ...] = field(default_factory=tuple)
 
@@ -35,8 +40,9 @@ class EmailDeliveryError(Exception):
 
 
 class Mailer:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, brand_name: str = "TrustUs Health"):
         self.settings = settings
+        self.brand_name = brand_name
 
     async def send_email_in_background(self, email: OutboundEmail) -> None:
         try:
@@ -87,18 +93,26 @@ class Mailer:
             if self.settings.gmail_address is None:
                 raise RuntimeError("Gmail sender is not configured.")
             sender = str(self.settings.gmail_address)
-            message["From"] = formataddr(("TrustUs Health", sender))
+            message["From"] = formataddr((self.brand_name, sender))
         else:
-            message["From"] = "TrustUs Health <no-reply@localhost>"
+            message["From"] = formataddr((self.brand_name, "no-reply@localhost"))
         message["To"] = email.to
         message["Subject"] = email.subject
 
-        if email.text is not None:
-            message.set_content(email.text)
-            if email.html is not None:
-                message.add_alternative(email.html, subtype="html")
-        else:
-            message.set_content(email.html or "", subtype="html")
+        text = email.text or ""
+        content_html = email.html if email.html is not None else text_to_html(text)
+        html = render_branded_email(self.brand_name, email.subject, content_html)
+        message.set_content(text)
+        message.add_alternative(html, subtype="html")
+        html_part = message.get_body(preferencelist=("html",))
+        if html_part is None:
+            raise RuntimeError("The branded HTML email body could not be created.")
+        html_part.add_related(
+            LOGO_PATH.read_bytes(),
+            maintype="image",
+            subtype="png",
+            cid=f"<{LOGO_CONTENT_ID}>",
+        )
 
         for attachment in email.attachments:
             if "/" not in attachment.content_type:

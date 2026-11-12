@@ -24,14 +24,17 @@ async def post(portal, h, **kw):
 async def test_bill_no_sequence_and_exact_match_by_lab_pid(portal):
     h = await admin(portal)
     a = await post(portal, h, lab_pid="A1")
-    assert a.status_code == 201 and a.json()["entry"]["bill_no"] == "000001"
+    assert a.status_code == 201 and a.json()["entry"]["bill_no"] == "556701"
     b = await post(portal, h, patient_name="Ramesh Gada", gender="Male", age=52, lab_pid="A2")
-    assert b.json()["entry"]["bill_no"] == "000002"
+    assert b.json()["entry"]["bill_no"] == "556702"
     c = await post(portal, h, lab_pid="A1", referred_by="dr saumil shah")  # same lab + date + PID
     j = c.json()
-    assert c.status_code == 200 and j["outcome"] == "merged" and j["entry"]["bill_no"] == "000001"
+    assert c.status_code == 200 and j["outcome"] == "merged" and j["entry"]["bill_no"] == "556701"
     assert "referred_by" in j["filled_fields"] and j["entry"]["referred_by"] == "Dr. Saumil Shah"
-    assert (await post(portal, h, lab_pid="B7", registration_date="2026-10-15")).json()["entry"]["bill_no"] == "000003"
+    assert (
+        (await post(portal, h, lab_pid="B7", registration_date="2026-10-15")).json()["entry"]["bill_no"]
+        == "556703"
+    )
 
 
 async def test_conflict_needs_a_choice_and_nothing_is_overwritten(portal):
@@ -53,7 +56,7 @@ async def test_possible_match_and_different_patient(portal):
     assert r.status_code == 409 and r.json()["outcome"] == "possible_match"
     assert r.json()["possible_matches"][0]["id"] == first.json()["entry"]["id"]
     forced = await post(portal, h, patient_name="Kalphem Ms.", lab_pid="Z9", force_new=True)
-    assert forced.status_code == 201 and forced.json()["entry"]["bill_no"] == "000002"
+    assert forced.status_code == 201 and forced.json()["entry"]["bill_no"] == "556702"
 
 
 async def test_edit_keeps_bill_no_and_complete_entries_reach_the_right_month_sheet(portal):
@@ -79,9 +82,20 @@ async def test_edit_keeps_bill_no_and_complete_entries_reach_the_right_month_she
 
 async def test_concurrent_saves_get_unique_contiguous_bill_numbers(portal):
     h = await admin(portal)
-    rs = await asyncio.gather(*(post(portal, h, patient_name=f"Patient Number{chr(65 + i)}", lab_pid=f"P{i}") for i in range(12)))
+    rs = await asyncio.gather(
+        *(
+            post(
+                portal,
+                h,
+                patient_name=f"Patient Number{chr(65 + i)}",
+                lab_pid=f"P{i}",
+                force_new=True,
+            )
+            for i in range(12)
+        )
+    )
     nos = sorted(r.json()["entry"]["bill_no"] for r in rs)
-    assert nos == [str(i).zfill(6) for i in range(1, 13)]
+    assert nos == [str(i).zfill(6) for i in range(556701, 556713)]
 
 
 async def test_staff_access_is_per_lab(portal):

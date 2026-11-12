@@ -23,12 +23,14 @@ async def test_login_happy_path_and_me(portal):
     assert me.status_code == 200 and me.json()["email"] == "sam@example.com" and me.json()["role"] == "staff"
 
 
-async def test_otp_email_is_plain_text_six_digits_and_stored_hashed(portal):
+async def test_otp_email_has_branded_html_and_stores_code_hashed(portal):
     await portal.add_user("sam@example.com")
     await request(portal, "sam@example.com")
     mail = portal.mailer.sent[0]
     code = portal.mailer.last_code("sam@example.com")
     assert len(code) == 6 and "TrustUs Health" in mail["subject"]
+    assert f">{code}</span>" in mail["html"]
+    assert "It expires in 5 minutes" in mail["html"]
     stored = await portal.db["otp_challenges"].find_one({"email": "sam@example.com"})
     assert code not in str(stored) and stored["code_hash"] != code
 
