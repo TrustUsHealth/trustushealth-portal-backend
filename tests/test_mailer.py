@@ -52,10 +52,50 @@ def test_message_supports_text_html_and_pdf_attachments():
     assert message["To"] == "recipient@example.com"
     assert message.get_content_type() == "multipart/mixed"
     assert message.get_body(preferencelist=("plain",)).get_content() == "Plain text\n"
+    html_part = message.get_body(preferencelist=("html",))
+    html_content = html_part.get_body(preferencelist=("html",)).get_content()
+    assert "TrustUs Health" in html_content
+    assert "cid:trustus-health-logo" in html_content
+    logo = next(part for part in message.walk() if part.get_content_type() == "image/png")
+    assert logo.get_content_type() == "image/png"
+    assert logo["Content-ID"] == "<trustus-health-logo>"
     attachment = next(message.iter_attachments())
     assert attachment.get_content_type() == "application/pdf"
     assert attachment.get_filename() == "result.pdf"
     assert attachment.get_payload(decode=True) == b"%PDF-1.7"
+
+
+def test_text_email_gets_branded_html_and_escapes_text():
+    mailer = Mailer(make_settings(), brand_name="TrustUs & Health")
+    message = mailer._build_message(
+        OutboundEmail(to="recipient@example.com", subject="A <notice>", text="First line\nSecond <line>")
+    )
+
+    html_part = message.get_body(preferencelist=("html",))
+    html_content = html_part.get_body(preferencelist=("html",)).get_content()
+    assert "TrustUs &amp; Health" in html_content
+    assert "A &lt;notice&gt;" in html_content
+    assert "Second &lt;line&gt;" in html_content
+    assert "cid:trustus-health-logo" in html_content
+    assert "First line<br>" in html_content
+
+
+def test_email_with_html_keeps_plain_text_alternative_and_embeds_logo():
+    mailer = Mailer(make_settings())
+    message = mailer._build_message(
+        OutboundEmail(
+            to="recipient@example.com",
+            subject="Login code",
+            text="Your code is 123456",
+            html="<b>123456</b>",
+        )
+    )
+
+    assert message.get_body(preferencelist=("plain",)).get_content() == "Your code is 123456\n"
+    html_part = message.get_body(preferencelist=("html",))
+    html_content = html_part.get_body(preferencelist=("html",)).get_content()
+    assert "<b>123456</b>" in html_content
+    assert "cid:trustus-health-logo" in html_content
 
 
 def test_gmail_transport_uses_tls_and_the_app_password(monkeypatch):

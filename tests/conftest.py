@@ -20,7 +20,14 @@ class FakeMailer:
         self.sent: list[dict] = []
 
     async def send_email(self, email: OutboundEmail) -> None:
-        self.sent.append({"to": email.to, "subject": email.subject, "body": email.text or email.html or ""})
+        self.sent.append(
+            {
+                "to": email.to,
+                "subject": email.subject,
+                "body": email.text or email.html or "",
+                "html": email.html or "",
+            }
+        )
 
     async def send_email_in_background(self, email: OutboundEmail) -> None:
         await self.send_email(email)

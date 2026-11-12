@@ -28,6 +28,8 @@ Implemented API functionality:
 - Admin APIs for users/invitations, module visibility, access requests and grants, plus an access matrix.
 - Dashboard tiles, public app/brand configuration, and access-controlled lab/partner configuration.
 - Audit events for authentication and access changes, YAML validation, OpenAPI generation, and `/healthz`.
+- Transactional emails use a shared branded HTML layout with a plain-text alternative and an embedded TrustUs Health logo.
+  Keep `app/core/assets/brand-logo.png` synchronized with the frontend's `public/brand/logo-full.svg`.
 
 
 The backend folders for `bill_generator`, `reports`, `delivery`, `logs`, and `analytics` do not exist yet; their YAML

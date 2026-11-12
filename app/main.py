@@ -98,7 +98,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         generate_unique_id_function=_operation_id,
     )
     app.state.settings, app.state.config = settings, cfg
-    app.state.mailer, app.state.events = Mailer(settings), EventBus()
+    app.state.mailer, app.state.events = Mailer(settings, cfg.app.brand.name), EventBus()
     app.state.rate_limiter = RateLimiter()
     # Same-origin in production (frontend proxies /api/v1/*); CORS only helps local dev.
     app.add_middleware(
