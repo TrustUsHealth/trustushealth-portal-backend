@@ -1,0 +1,29 @@
+key: spectrum
+name: Spectrum Laboratory
+enabled_in: [patient_registry, bill_generator, reports]
+
+detect:                                  # used only by Gmail intake
+  sender_domains: [example-spectrum.com] # fill with the real sender domain
+  text_contains_all: ["Referral Doctor", "Sample ID"]
+  filename_hint: '^\d{8}-\d{4}-\d{2}-\d{2}\.pdf$'
+
+datetime_formats: ["%b %d, %Y, %I:%M %p."]   # e.g. "Oct 14, 2026, 11:26 AM."
+
+header:                                  # report label -> standard field
+  patient_name:      { label: "Patient Name" }
+  age_gender:        { label: "Age / Gender" }          # "45 Years / Male" -> age, age_unit, gender
+  lab_pid:           { label: "Patient ID" }            # "0200118333"
+  referred_by:       { label: "Referral Doctor" }       # "Dr. SAUMIL SHAH"
+  collection_time:   { label: "Collection Time", type: datetime }
+  reporting_time:    { label: "Reporting Time",  type: datetime }
+  registration_date: { from: collection_time, type: date }   # report has no registration date
+extra_labels: ["Sample ID", "Receiving Time", "Referrer"]    # read for audit only, not saved as fields
+                                         # "Referrer" is the collection client (TrustUs), not the doctor
+
+tests:
+  source: page_heading      # each page = one test; its centred bold heading is the test name
+  repeat_pages: merge       # same heading on several pages counts once
+
+bill:
+  header_lines: ["Spectrum Laboratory"]    # plain text, copied from the sample bill; no images
+  sections: [bill_no, patient_details, tests_table, amount_summary]

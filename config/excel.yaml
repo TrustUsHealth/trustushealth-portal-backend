@@ -1,0 +1,21 @@
+workbook_name: "TrustUs_Patient_Registry_{year}.xlsx"
+tests_separator: "; "     # test names can contain commas, so ";" avoids confusion
+recipients_env: ADMIN_REPORT_EMAILS     # env value wins when set; otherwise the list below is used
+recipients:
+  - chandrikachheda99@gmail.com
+  - vansh.h.chheda@gmail.com
+send:
+  day: 1                  # 1st of every month
+  time: "06:00"           # IST (timezone from app.yaml)
+columns:                  # order = column order; add or remove freely
+  - { field: bill_no,           header: Bill No }
+  - { field: registration_date, header: Registration Date }
+  - { field: partner_key,       header: Laboratory }
+  - { field: patient_name,      header: Patient Name }
+  - { field: age,               header: Age }
+  - { field: gender,            header: Gender }
+  - { field: lab_pid,           header: Patient ID }
+  - { field: referred_by,       header: Referred By }
+  - { field: tests,             header: Tests }
+  - { field: lab_cost,          header: Lab Cost }
+  - { field: net_amount,        header: Billed Amount }

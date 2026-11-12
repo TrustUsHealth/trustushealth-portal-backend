@@ -1,0 +1,13 @@
+# Plain text only, no logos. Placeholders: {patient_name} {brand} {bill_no}
+email:
+  subject: "Your report from {brand}"
+  body: |
+    Dear {patient_name},
+
+    Please find your documents attached.
+
+    {brand}
+whatsapp:
+  template_name: report_ready          # replace with the approved Meta utility template name
+  language: en
+  share_text: "Hello {patient_name}, your documents from {brand} are ready."   # fallback "Share on WhatsApp"
