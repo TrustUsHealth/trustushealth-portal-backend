@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "d56f32bc-9dc8-41df-8548-9d3e963e7062",
     "name": "TrustUs Health Portal Backend",
-    "description": "Backend API organized by feature. Set baseUrl and adminEmail, request an OTP, then verify it; the access token is saved automatically. Refresh tokens use Postman's cookie jar. Patient Registry folders are numbered in the order they should be run (see each folder description).",
+    "description": "Backend API organized by feature. Set baseUrl and adminEmail, request an OTP, then verify it; the access token is saved automatically. Refresh tokens use Postman's cookie jar. Patient Registry folders are numbered in the order they should be run (see each folder description). Business Insights (INS1, INS2) is Admin only.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -30,7 +30,11 @@
     { "key": "billNo", "value": "", "type": "string" },
     { "key": "reportId", "value": "", "type": "string" },
     { "key": "customerId", "value": "", "type": "string" },
-    { "key": "jobSecret", "value": "", "type": "string" }
+    { "key": "jobSecret", "value": "", "type": "string" },
+    { "key": "insPeriod", "value": "this_month", "type": "string" },
+    { "key": "insCompare", "value": "previous", "type": "string" },
+    { "key": "insFrom", "value": "2026-10-01", "type": "string" },
+    { "key": "insTo", "value": "2026-10-31", "type": "string" }
   ],
   "item": [
     {
@@ -1091,6 +1095,514 @@
             { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"] } }
           ],
           "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries" },
+          "response": [],
+          "auth": { "type": "noauth" }
+        }
+      ]
+    },
+    {
+      "name": "INS1 - Business Insights (Admin only)",
+      "description": "Run as Admin, ideally after the PR folders so there is data (entries need a billed amount and lab cost to show Margin). Common query parameters: period (this_month, last_month, last_3_months, this_fy, last_fy) or from + to for a custom range; labs (comma-separated keys such as spectrum,metropolis); compare (previous, last_year, none); refresh=true skips the 5-minute cache. Change insPeriod and insCompare in the collection variables to try other presets. Money values arrive as strings with two decimals.",
+      "item": [
+        {
+          "name": "Dashboard tile present (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('insights tile is open with four submodules', function () {",
+                  "  const t = pm.response.json().find(function (x) { return x.key === 'insights'; });",
+                  "  pm.expect(t, 'tile missing').to.exist;",
+                  "  pm.expect(t.state).to.eql('open');",
+                  "  pm.expect(t.submodules.map(function (s) { return s.key; })).to.have.members(['overview', 'finance', 'labs', 'patients']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "response": []
+        },
+        {
+          "name": "Filters (presets, labs, thresholds)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 with presets, labs and thresholds', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.presets.map(function (p) { return p.key; })).to.have.members(['this_month', 'last_month', 'last_3_months', 'this_fy', 'last_fy']);",
+                  "  pm.expect(j.labs.length).to.be.above(0);",
+                  "  j.labs.forEach(function (l) { pm.expect(l.color).to.match(/^#[0-9A-Fa-f]{6}$/); });",
+                  "  pm.expect(j.thresholds).to.have.keys(['low_margin_pct', 'high_discount_pct']);",
+                  "  pm.expect(j.report_sections).to.include('overview');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/filters", "description": "Presets are already resolved to dates in IST, with the matching Previous-period compare dates. earliest_data_date is the first registration date on record." },
+          "response": []
+        },
+        {
+          "name": "Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 with four KPIs, trend and lab split', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.kpis.map(function (k) { return k.key; })).to.eql(['billed_revenue', 'margin', 'visits', 'patients']);",
+                  "  pm.expect(j.grain).to.be.oneOf(['day', 'week', 'month']);",
+                  "  pm.expect(j.trend).to.be.an('array');",
+                  "  pm.expect(j.highlights.length).to.be.at.most(5);",
+                  "  pm.expect(j.attention.map(function (a) { return a.key; })).to.eql(['awaiting_billing', 'below_cost', 'missing_lab_cost']);",
+                  "});",
+                  "pm.test('money is a two-decimal string', function () { pm.expect(pm.response.json().kpis[0].value).to.match(/^-?\\d+\\.\\d{2}$/); });",
+                  "pm.test('no patient identifiers', function () { pm.expect(pm.response.text()).to.not.match(/patient_name|phone|lab_pid/); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?period={{insPeriod}}&compare={{insCompare}}",
+            "description": "Four KPI cards (Billed Revenue, Margin, Visits, Patients) with change against the compare range, Highlights, the revenue/margin trend, Revenue by Lab and the attention chips. When the period has no billed visits, empty is true and empty_message explains it."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview: custom range (from and to)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('range follows from/to and filters echo custom', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.range.start).to.eql(pm.collectionVariables.get('insFrom'));",
+                  "  pm.expect(j.range.end).to.eql(pm.collectionVariables.get('insTo'));",
+                  "  pm.expect(j.filters.period).to.eql('custom');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?from={{insFrom}}&to={{insTo}}&compare={{insCompare}}",
+            "description": "Custom period. Compare 'previous' uses an equally long range right before it."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview: one lab, Compare off",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('compare is off: no compare range and no direction', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.compare_range).to.eql(null);",
+                  "  j.kpis.forEach(function (k) { pm.expect(k.direction).to.eql(null); });",
+                  "  pm.expect(j.filters.labs).to.eql([pm.collectionVariables.get('partnerKey')]);",
+                  "  j.revenue_by_lab.forEach(function (l) { pm.expect(l.lab).to.eql(pm.collectionVariables.get('partnerKey')); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?period={{insPeriod}}&labs={{partnerKey}}&compare=none",
+            "description": "Uses partnerKey (default spectrum). Pass several labs as labs=spectrum,metropolis."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview: same period last year",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?period={{insPeriod}}&compare=last_year",
+            "description": "If there is no data a year back, a data note says the comparison is empty and changes show as 'new'."
+          },
+          "response": []
+        },
+        {
+          "name": "Overview: force refresh (skip 5-minute cache)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"] }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?period={{insPeriod}}&compare={{insCompare}}&refresh=true",
+            "description": "Results are cached for 5 minutes and cleared automatically when an entry is saved or deleted. Use refresh=true after editing data directly in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Finance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 with four finance KPIs', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.kpis.map(function (k) { return k.key; })).to.eql(['billed_revenue', 'lab_cost', 'margin', 'discounts']);",
+                  "  pm.expect(j.low_margin_threshold_pct).to.be.a('number');",
+                  "});",
+                  "pm.test('lab table rows add up to the Billed Revenue card', function () {",
+                  "  const j = pm.response.json();",
+                  "  const sum = j.lab_table.rows.reduce(function (s, r) { return s + Math.round(parseFloat(r.billed_revenue) * 100); }, 0);",
+                  "  pm.expect(sum).to.eql(Math.round(parseFloat(j.kpis[0].value) * 100));",
+                  "  pm.expect(j.lab_table.totals.billed_revenue).to.eql(j.kpis[0].value);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/finance?period={{insPeriod}}&compare={{insCompare}}",
+            "description": "Billed Revenue, Lab Cost, Margin and Discounts Given, plus Where the money goes, Margin % by Lab (below_threshold marks labs under the limit), Discounts, the lab-wise table and Avg Bill Value. Margin counts only billed visits that have a lab cost; data_notes says how many are missing."
+          },
+          "response": []
+        },
+        {
+          "name": "Below-cost bills (review list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 and every row has negative margin and no patient details', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.total).to.be.a('number');",
+                  "  j.items.forEach(function (i) {",
+                  "    pm.expect(i).to.have.keys(['bill_no', 'date', 'lab', 'lab_name', 'billed', 'lab_cost', 'margin']);",
+                  "    pm.expect(parseFloat(i.margin)).to.be.below(0);",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/below_cost?period={{insPeriod}}&compare=none",
+            "description": "Worst margin first, up to 500 rows. Each open is written to the audit log as insights.below_cost_review."
+          },
+          "response": []
+        },
+        {
+          "name": "Labs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 with lab cards, visits by lab, turnaround and cost statement', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.lab_cards).to.be.an('array');",
+                  "  pm.expect(j.visits_by_lab.points).to.be.an('array');",
+                  "  pm.expect(j.turnaround).to.be.an('array');",
+                  "  pm.expect(j.lab_cost_statement.months).to.be.an('array');",
+                  "});",
+                  "pm.test('cost statement grand total equals the sum of its month totals', function () {",
+                  "  const s = pm.response.json().lab_cost_statement;",
+                  "  const sum = Object.values(s.totals).reduce(function (a, v) { return a + Math.round(parseFloat(v) * 100); }, 0);",
+                  "  pm.expect(sum).to.eql(Math.round(parseFloat(s.grand_total) * 100));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/labs?period={{insPeriod}}&compare={{insCompare}}",
+            "description": "One card per lab with visits, Billed Revenue, Margin % and median turnaround; Visits by Lab over time; Report Turnaround (median and Slowest 10%, shown in days above 48 hours); the Lab Cost Statement by month."
+          },
+          "response": []
+        },
+        {
+          "name": "Patients",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 with patient KPIs and breakdowns', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(j.kpis.map(function (k) { return k.key; })).to.eql(['patients', 'new_patients', 'returning_patients', 'repeat_rate']);",
+                  "  pm.expect(j.repeat_building).to.be.a('boolean');",
+                  "  pm.expect(j.age_gender).to.be.an('array');",
+                  "  pm.expect(j.top_tests.rows).to.be.an('array');",
+                  "  pm.expect(j.top_referrers.rows).to.be.an('array');",
+                  "});",
+                  "pm.test('new + returning equals patients', function () {",
+                  "  const k = {}; pm.response.json().kpis.forEach(function (x) { k[x.key] = x.value; });",
+                  "  pm.expect(k.new_patients + k.returning_patients).to.eql(k.patients);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/patients?period={{insPeriod}}&compare={{insCompare}}",
+            "description": "Patients, New, Returning and Repeat Rate; New vs Returning over time; Age and Gender bands; Top Tests (aliases merged) and Top Referrers, each with an Others group. Until six months of data exist, repeat_building is true and a note says repeat figures are still building."
+          },
+          "response": []
+        },
+        {
+          "name": "Bad filter: unknown lab -> 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 with a plain message', function () {",
+                  "  pm.response.to.have.status(422);",
+                  "  pm.expect(pm.response.json().detail).to.include('Unknown lab');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?labs=nolab" },
+          "response": []
+        },
+        {
+          "name": "Bad filter: start after end -> 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 start date message', function () {",
+                  "  pm.response.to.have.status(422);",
+                  "  pm.expect(pm.response.json().detail).to.include('start date');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?from=2026-11-05&to=2026-11-01" },
+          "response": []
+        },
+        {
+          "name": "Bad filter: unknown period -> 422",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?period=nonsense" },
+          "response": []
+        },
+        {
+          "name": "PDF Business Report (all sections)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 PDF with a dated file name', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "  pm.expect(pm.response.headers.get('Content-Disposition')).to.match(/TrustUs_Business_Report_\\d{4}-\\d{2}-\\d{2}_\\d{4}-\\d{2}-\\d{2}\\.pdf/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/report.pdf?period={{insPeriod}}&compare={{insCompare}}",
+            "description": "Use Send and Download in Postman to open the PDF. It is generated on request from the same numbers as the screens and is not stored. Limited to 6 downloads a minute per Admin (429 after that). Each download is audited as insights.report_download."
+          },
+          "response": []
+        },
+        {
+          "name": "PDF Business Report (chosen sections, one lab)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 PDF', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/report.pdf?period={{insPeriod}}&labs={{partnerKey}}&compare=none&sections=overview,finance",
+            "description": "sections is a comma-separated subset of overview, finance, labs, patients."
+          },
+          "response": []
+        },
+        {
+          "name": "PDF: unknown section -> 422",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/report.pdf?sections=bogus" },
+          "response": []
+        },
+        {
+          "name": "Monthly report job (cron endpoint)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 and a valid status', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.be.oneOf(['disabled', 'no_recipients', 'sent', 'already_sent', 'busy', 'partial']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Job-Secret", "value": "{{jobSecret}}" }],
+            "url": "{{baseUrl}}/api/v1/insights/jobs/report_monthly",
+            "description": "Scheduler endpoint; run it after the Excel monthly job on the 1st. Returns 'disabled' unless report.monthly_email is true in config/insights.yaml. When enabled, the first call emails last month's PDF to the Excel recipients (Mailpit locally) and a second call returns 'already_sent'. Set jobSecret to JOB_SECRET from .env."
+          },
+          "response": [],
+          "auth": { "type": "noauth" }
+        },
+        {
+          "name": "Monthly report job with wrong secret -> 403",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Job-Secret", "value": "wrong-secret-value-000000000" }],
+            "url": "{{baseUrl}}/api/v1/insights/jobs/report_monthly"
+          },
+          "response": [],
+          "auth": { "type": "noauth" }
+        }
+      ]
+    },
+    {
+      "name": "INS2 - Business Insights: Access checks (log in as Staff)",
+      "description": "Switch accessToken to a Staff (or Engineer) user. Business Insights is Admin only: every endpoint must return 403 even if that user was granted Insights earlier, and the module must not appear in their dashboard tiles. The last request has no token and must return 401.",
+      "item": [
+        {
+          "name": "Staff: dashboard has no Business Insights tile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no insights tile for non-Admin', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  const keys = pm.response.json().map(function (x) { return x.key; });",
+                  "  pm.expect(keys).to.not.include('insights');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "response": []
+        },
+        {
+          "name": "Staff: overview -> 403",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview" },
+          "response": []
+        },
+        {
+          "name": "Staff: filters -> 403",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/filters" },
+          "response": []
+        },
+        {
+          "name": "Staff: PDF report -> 403",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/report.pdf" },
+          "response": []
+        },
+        {
+          "name": "Staff: grant Business Insights is refused (run as Admin)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422 not grantable', function () { pm.response.to.have.status(422); });"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"module\": \"insights\",\n  \"submodule\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/access/grants",
+            "description": "Run with the Admin token (userId is saved by 'Invite user'). Admin-only modules cannot be granted to anyone else."
+          },
+          "response": []
+        },
+        {
+          "name": "No token -> 401",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"] } }
+          ],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview" },
           "response": [],
           "auth": { "type": "noauth" }
         }

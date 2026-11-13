@@ -7,6 +7,7 @@ for example: "partners/spectrum.yaml: header -> lab_pid: unknown standard field"
 from __future__ import annotations
 
 import re
+import string
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -126,6 +127,7 @@ class AppCfg(_Strict):
     brand: Brand
     timezone: str
     currency: str = "INR"
+    fiscal_year_start_month: int = Field(4, ge=1, le=12)  # April to March; drives "This FY" in Business Insights
     session: SessionCfg = SessionCfg()
     upload: UploadCfg
     bill_no: BillNoCfg = BillNoCfg()
@@ -277,6 +279,8 @@ class PartnerCfg(_Strict):
     extra_labels: list[str] = []
     tests: ExtractTests | None = None
     bill: BillLayout | None = None
+    # Pins this lab's colour in Business Insights charts and the PDF.
+    chart_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
 
     @model_validator(mode="after")
     def _generic_needs_rules(self) -> PartnerCfg:
@@ -290,6 +294,94 @@ class PartnerCfg(_Strict):
         return self
 
 
+HEX = r"^#[0-9A-Fa-f]{6}$"
+HighlightKey = Literal[
+    "revenue_change",
+    "top_lab",
+    "margin_change",
+    "discount_alert",
+    "below_cost",
+    "low_margin",
+    "slowest_lab",
+    "repeat_rate",
+]
+HIGHLIGHT_FIELDS: dict[str, set[str]] = {
+    "revenue_change": {"value", "direction", "pct", "compare_label"},
+    "top_lab": {"lab", "share"},
+    "margin_change": {"value", "direction", "pct", "compare_label"},
+    "discount_alert": {"rate", "threshold"},
+    "below_cost": {"count", "bills", "were"},
+    "slowest_lab": {"lab", "median"},
+    "repeat_rate": {"pct"},
+    "low_margin": {"labs", "threshold"},
+}
+
+
+class AgeBand(_Strict):
+    label: str
+    max: int = Field(ge=0, le=150)
+
+
+class InsightsThresholds(_Strict):
+    low_margin_pct: float = Field(25, ge=0, le=100)
+    high_discount_pct: float = Field(10, ge=0, le=100)
+
+
+class InsightsHighlights(_Strict):
+    max_items: int = Field(5, ge=1, le=10)
+    order: list[HighlightKey]
+    templates: dict[HighlightKey, str] = {}
+
+    @model_validator(mode="after")
+    def _placeholders(self) -> InsightsHighlights:
+        for key, text in self.templates.items():
+            unknown = {n for _, n, _, _ in string.Formatter().parse(text) if n} - HIGHLIGHT_FIELDS[key]
+            if unknown:
+                allowed = sorted(HIGHLIGHT_FIELDS[key])
+                raise ValueError(f"template '{key}' uses unknown placeholder(s) {sorted(unknown)}; allowed: {allowed}")
+        return self
+
+
+class ChartPalette(_Strict):
+    labs: list[str] = Field(min_length=1)
+    others: str = Field(pattern=HEX)
+    compare_line: str = Field(pattern=HEX)
+
+    @model_validator(mode="after")
+    def _hex(self) -> ChartPalette:
+        for c in self.labs:
+            if not re.match(HEX, c):
+                raise ValueError(f"'{c}' is not a colour like #34495E")
+        return self
+
+
+class InsightsReport(_Strict):
+    sections: list[Literal["overview", "finance", "labs", "patients"]] = Field(min_length=1)
+    footer: str
+    monthly_email: bool = False
+
+
+class InsightsCfg(_Strict):
+    default_period: Literal["this_month", "last_month", "last_3_months", "this_fy", "last_fy"] = "this_month"
+    compare_default: Literal["previous", "last_year", "none"] = "previous"
+    top_n: int = Field(8, ge=1, le=30)
+    age_bands: list[AgeBand] = Field(min_length=1)
+    thresholds: InsightsThresholds = InsightsThresholds()
+    test_aliases: dict[str, str] = {}
+    highlights: InsightsHighlights
+    chart_palette: ChartPalette
+    report: InsightsReport
+
+    @model_validator(mode="after")
+    def _bands(self) -> InsightsCfg:
+        maxes = [b.max for b in self.age_bands]
+        if maxes != sorted(set(maxes)):
+            raise ValueError("age_bands must go from the youngest to the oldest, each 'max' larger than the one before")
+        if len({b.label for b in self.age_bands}) != len(maxes):
+            raise ValueError("age_bands labels must be different from each other")
+        return self
+
+
 class PortalConfig(BaseModel):
     app: AppCfg
     modules: list[ModuleDef]
@@ -298,6 +390,7 @@ class PortalConfig(BaseModel):
     excel: ExcelCfg
     dedupe: DedupeCfg
     delivery: DeliveryCfg
+    insights: InsightsCfg
 
     def module(self, key: str) -> ModuleDef | None:
         return next((m for m in self.modules if m.key == key), None)
@@ -381,6 +474,14 @@ def _cross_check(cfg: PortalConfig) -> list[str]:
         if col.field not in fset:
             p.append(f"excel.yaml: column '{col.header}' uses unknown field '{col.field}'")
 
+    ins = cfg.insights
+    for alias in ins.test_aliases:
+        if not alias.strip() or not ins.test_aliases[alias].strip():
+            p.append(f"insights.yaml: test_aliases: '{alias}' needs a name on both sides")
+    for k in ins.highlights.templates:
+        if k not in ins.highlights.order:
+            p.append(f"insights.yaml: highlights -> templates: '{k}' is not listed in 'order', so it would never show")
+
     for key, partner in cfg.partners.items():
         f = f"partners/{key}.yaml"
         for mk in partner.enabled_in:
@@ -417,6 +518,9 @@ def load_config(config_dir: Path | str = "config") -> PortalConfig:
     delivery = _validate(
         DeliveryCfg, _read_yaml(root / "delivery.yaml", "delivery.yaml", problems), "delivery.yaml", problems
     )
+    insights = _validate(
+        InsightsCfg, _read_yaml(root / "insights.yaml", "insights.yaml", problems), "insights.yaml", problems
+    )
 
     partners: dict[str, PartnerCfg] = {}
     pdir = root / "partners"
@@ -433,7 +537,7 @@ def load_config(config_dir: Path | str = "config") -> PortalConfig:
             continue
         partners[partner.key] = partner
 
-    if problems or not all([app, modules, fields, excel, dedupe, delivery]):
+    if problems or not all([app, modules, fields, excel, dedupe, delivery, insights]):
         raise ConfigError(problems)
 
     cfg = PortalConfig(
@@ -444,6 +548,7 @@ def load_config(config_dir: Path | str = "config") -> PortalConfig:
         excel=excel,
         dedupe=dedupe,
         delivery=delivery,
+        insights=insights,
     )
     problems = _cross_check(cfg)
     if problems:
