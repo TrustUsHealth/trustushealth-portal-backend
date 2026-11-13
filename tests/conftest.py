@@ -26,6 +26,10 @@ class FakeMailer:
                 "subject": email.subject,
                 "body": email.text or email.html or "",
                 "html": email.html or "",
+                "attachments": [
+                    {"filename": item.filename, "content_type": item.content_type, "content": item.content}
+                    for item in email.attachments
+                ],
             }
         )
 

@@ -61,3 +61,14 @@ modules:
     icon: bar-chart-3
     visible_to_staff: true
     roles: [admin, staff]
+
+  - key: insights
+    name: Business Insights
+    icon: trending-up
+    visible_to_staff: false
+    roles: [admin]                    # Admin only: never grantable, no staff toggle, not in the Access Portal matrix
+    submodules:
+      - { key: overview, name: Overview }
+      - { key: finance,  name: Finance }
+      - { key: labs,     name: Labs }
+      - { key: patients, name: Patients }

@@ -1,0 +1,34 @@
+# Business Insights (Admin only). Safe to edit via pull request; CI validates every setting.
+default_period: this_month            # this_month | last_month | last_3_months | this_fy | last_fy
+compare_default: previous             # previous | last_year | none
+top_n: 8                              # rows in Top Tests / Top Referrers; the rest are grouped as "Others"
+age_bands:                            # label + highest age in years; ages in months or days count as under 1
+  - { label: "Under 18", max: 17 }
+  - { label: "18-39",    max: 39 }
+  - { label: "40-59",    max: 59 }
+  - { label: "60+",      max: 150 }
+thresholds:                           # placeholders: confirm with the owner
+  low_margin_pct: 25                  # marker on "Margin % by Lab"; Highlights mention labs below it
+  high_discount_pct: 10               # Highlights warn when Discount Rate goes above it
+test_aliases:                         # optional: merge different spellings into one test name
+  "Creatinine, Serum": "Creatinine"
+highlights:
+  max_items: 5
+  order: [revenue_change, top_lab, margin_change, discount_alert, below_cost, low_margin, slowest_lab, repeat_rate]
+  templates:                          # plain sentences; {placeholders} are filled from the numbers
+    revenue_change: "Billed Revenue was {value}, {direction} {pct}% compared with {compare_label}."
+    top_lab: "{lab} brought in {share}% of Billed Revenue."
+    margin_change: "Margin was {value}, {direction} {pct}% compared with {compare_label}."
+    discount_alert: "Discount Rate is {rate}%, above the {threshold}% limit."
+    below_cost: "{count} {bills} {were} below cost. Review them in Finance."
+    low_margin: "{labs} earned a margin below {threshold}%."
+    slowest_lab: "{lab} has the slowest typical report turnaround ({median})."
+    repeat_rate: "{pct}% of patients were returning patients."
+chart_palette:                        # data colours only, never red (red stays for primary actions)
+  labs: ["#E9666A", "#07703A", "#003057", "#7FAE9B", "#8A6F9E"]   # by lab position; pin one with chart_color: in the lab's partner file
+  others: "#D9D5CE"
+  compare_line: "#525656"
+report:
+  sections: [overview, finance, labs, patients]
+  footer: "Confidential. For TrustUs Health internal use only."
+  monthly_email: false                # true: email last month's report on the 1st (recipients as in excel.yaml)
