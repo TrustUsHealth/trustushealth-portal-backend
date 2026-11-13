@@ -25,7 +25,7 @@ highlights:
     slowest_lab: "{lab} has the slowest typical report turnaround ({median})."
     repeat_rate: "{pct}% of patients were returning patients."
 chart_palette:                        # data colours only, never red (red stays for primary actions)
-  labs: ["#34495E", "#6B8CAE", "#C8A25E", "#7FAE9B", "#8A6F9E"]   # by lab position; pin one with chart_color: in the lab's partner file
+  labs: ["#E9666A", "#07703A", "#003057", "#7FAE9B", "#8A6F9E"]   # by lab position; pin one with chart_color: in the lab's partner file
   others: "#D9D5CE"
   compare_line: "#525656"
 report:
