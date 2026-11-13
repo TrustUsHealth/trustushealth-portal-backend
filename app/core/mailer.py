@@ -1,13 +1,17 @@
 """Asynchronous email interface with local SMTP and Gmail SMTP transports."""
 
 import asyncio
+import base64
 import logging
+import secrets
 import smtplib
 import ssl
 from dataclasses import dataclass, field
 from email.message import EmailMessage as MimeMessage
 from email.utils import formataddr
 from pathlib import Path
+
+import httpx
 
 from app.core.config import Settings
 from app.core.email_templates import render_branded_email, text_to_html
@@ -16,6 +20,7 @@ log = logging.getLogger(__name__)
 RETRY_DELAYS_SECONDS = (0.5, 1.0)
 LOGO_CONTENT_ID = "trustus-health-logo"
 LOGO_PATH = Path(__file__).with_name("assets") / "brand-logo.png"
+GOOGLE_SCRIPT_TIMEOUT_SECONDS = 20
 
 
 @dataclass(frozen=True)
@@ -39,6 +44,12 @@ class EmailDeliveryError(Exception):
     """Sanitized delivery failure; never includes message content or credentials."""
 
 
+class _DeliveryAttemptError(Exception):
+    def __init__(self, category: str, retryable: bool):
+        self.category = category
+        self.retryable = retryable
+
+
 class Mailer:
     def __init__(self, settings: Settings, brand_name: str = "TrustUs Health"):
         self.settings = settings
@@ -52,10 +63,16 @@ class Mailer:
 
     async def send_email(self, email: OutboundEmail) -> None:
         message = self._build_message(email)
+        idempotency_key = secrets.token_urlsafe(32)
         for attempt in range(len(RETRY_DELAYS_SECONDS) + 1):
             try:
-                await asyncio.to_thread(self._send_sync, message)
+                if self.settings.mail_transport == "google_apps_script":
+                    await self._send_google_apps_script(message, idempotency_key)
+                else:
+                    await asyncio.to_thread(self._send_sync, message)
                 return
+            except _DeliveryAttemptError as exc:
+                retryable, category = exc.retryable, exc.category
             except smtplib.SMTPResponseException as exc:
                 retryable = 400 <= exc.smtp_code < 500
                 category = "temporary_smtp_response" if retryable else "permanent_smtp_response"
@@ -83,6 +100,80 @@ class Mailer:
                 category,
             )
             raise EmailDeliveryError("Email delivery failed.") from None
+
+    async def _send_google_apps_script(self, message: MimeMessage, idempotency_key: str) -> None:
+        url = self.settings.google_script_url
+        secret = self.settings.google_script_secret
+        if not url or not secret:
+            raise RuntimeError("Google Apps Script email transport is not configured.")
+
+        payload = self._google_script_payload(message, idempotency_key, secret.get_secret_value())
+        try:
+            async with httpx.AsyncClient(
+                timeout=GOOGLE_SCRIPT_TIMEOUT_SECONDS,
+                follow_redirects=True,
+            ) as client:
+                response = await client.post(url, json=payload)
+        except httpx.TransportError:
+            raise _DeliveryAttemptError("connection", True) from None
+        except httpx.HTTPError:
+            raise _DeliveryAttemptError("http", False) from None
+
+        if response.status_code == 429 or response.status_code >= 500:
+            raise _DeliveryAttemptError("http_response", True)
+        if not 200 <= response.status_code < 300:
+            raise _DeliveryAttemptError("http_response", False)
+        try:
+            result = response.json()
+        except ValueError:
+            raise _DeliveryAttemptError("invalid_response", False) from None
+        if not isinstance(result, dict):
+            raise _DeliveryAttemptError("invalid_response", False)
+        if result.get("idempotencyKey") != idempotency_key:
+            raise _DeliveryAttemptError("invalid_response", False)
+        if result.get("error") == "busy":
+            raise _DeliveryAttemptError("script_busy", True)
+        if result.get("ok") is not True:
+            raise _DeliveryAttemptError("script_rejected", False)
+
+    @staticmethod
+    def _google_script_payload(message: MimeMessage, idempotency_key: str, secret: str) -> dict:
+        text, html = "", ""
+        inline_images = {}
+        attachments = []
+        for part in message.walk():
+            if part.is_multipart():
+                continue
+            content_type = part.get_content_type()
+            if part.get_content_disposition() == "attachment":
+                attachments.append(
+                    {
+                        "filename": part.get_filename(),
+                        "contentType": content_type,
+                        "content": base64.b64encode(part.get_payload(decode=True) or b"").decode("ascii"),
+                    }
+                )
+            elif content_type == "text/plain":
+                text = part.get_content()
+            elif content_type == "text/html":
+                html = part.get_content()
+            elif part.get("Content-ID"):
+                content_id = str(part["Content-ID"]).strip("<>")
+                inline_images[content_id] = {
+                    "contentType": content_type,
+                    "content": base64.b64encode(part.get_payload(decode=True) or b"").decode("ascii"),
+                }
+
+        return {
+            "secret": secret,
+            "idempotencyKey": idempotency_key,
+            "to": str(message["To"]),
+            "subject": str(message["Subject"]),
+            "text": text,
+            "html": html,
+            "inlineImages": inline_images,
+            "attachments": attachments,
+        }
 
     def _build_message(self, email: OutboundEmail) -> MimeMessage:
         if email.text is None and email.html is None:
