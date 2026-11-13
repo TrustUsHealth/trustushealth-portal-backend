@@ -4,6 +4,7 @@ import io
 from datetime import date
 from itertools import count
 
+import pymupdf
 import pytest
 from openpyxl import load_workbook
 
@@ -48,8 +49,10 @@ async def test_staff_and_engineer_get_403_from_every_endpoint(portal):
     for h in (staff, eng):
         for path in ["filters", *TABS, "report.pdf"]:
             assert (await portal.client.get(f"{INS}/{path}", headers=h)).status_code == 403, path
+        assert (await portal.client.post(f"{INS}/report.email", headers=h)).status_code == 403
     for path in ["filters", *TABS, "report.pdf"]:
         assert (await portal.client.get(f"{INS}/{path}")).status_code == 401
+    assert (await portal.client.post(f"{INS}/report.email")).status_code == 401
 
 
 async def test_old_grant_does_not_open_insights_and_new_grants_are_refused(portal):
@@ -180,11 +183,33 @@ async def test_pdf_report_download_sections_headers_audit_and_rate_limit(portal)
     r = await portal.client.get(f"{INS}/report.pdf?sections=overview,finance", headers=h)
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
     assert "TrustUs_Business_Report_2026-11-01_2026-11-12.pdf" in r.headers["content-disposition"]
+    with pymupdf.open(stream=r.content, filetype="pdf") as pdf:
+        assert pdf[0].get_images(full=True)
+        assert "BUSINESS REPORT" in pdf[0].get_text()
     assert (await portal.client.get(f"{INS}/report.pdf?sections=bogus", headers=h)).status_code == 422
     entries = [a async for a in portal.db["audit_logs"].find({"action": "insights.report_download"})]
     assert len(entries) == 1 and "sections=overview,finance" in entries[0]["target"] and "Secret" not in entries[0]["target"]
     codes = [(await portal.client.get(f"{INS}/report.pdf", headers=h)).status_code for _ in range(7)]
     assert codes[-1] == 429
+
+
+async def test_report_email_sends_the_selected_pdf_to_the_logged_in_admin(portal):
+    h = await admin(portal)
+    await seed(portal, entry("2026-11-02"))
+
+    r = await portal.client.post(
+        f"{INS}/report.email?sections=overview,finance",
+        headers=h,
+    )
+    assert r.status_code == 200 and r.json() == {"status": "sent"}
+    sent = portal.mailer.sent[-1]
+    assert sent["to"] == "boss@example.com" and "business report" in sent["subject"]
+    assert len(sent["attachments"]) == 1
+    attachment = sent["attachments"][0]
+    assert attachment["filename"] == "TrustUs_Business_Report_2026-11-01_2026-11-12.pdf"
+    assert attachment["content_type"] == "application/pdf" and attachment["content"].startswith(b"%PDF")
+    audit_entry = [a async for a in portal.db["audit_logs"].find({"action": "insights.report_email"})][0]
+    assert "sections=overview,finance" in audit_entry["target"] and "boss@example.com" not in audit_entry["target"]
 
 
 async def test_first_open_is_audited_once_per_session(portal):
@@ -229,15 +254,16 @@ async def test_monthly_job_needs_the_secret_and_is_off_by_default(portal):
 
 async def test_monthly_job_sends_once_and_keeps_the_access_portal_working(portal):
     h = await admin(portal)
+    sent_before = len(portal.mailer.sent)
     portal.app.state.settings.job_secret = "j" * 30
     portal.app.state.settings.admin_report_emails = "a@example.com,b@example.com"
     portal.app.state.config.insights.report.monthly_email = True
     await seed(portal, entry("2026-10-14"))
     first = await portal.client.post(JOB, headers={"X-Job-Secret": "j" * 30})
     assert first.status_code == 200 and first.json()["status"] == "sent" and first.json()["sent"] == 2
-    assert {m["to"] for m in portal.mailer.sent} == {"a@example.com", "b@example.com"}
+    assert {m["to"] for m in portal.mailer.sent[sent_before:]} == {"a@example.com", "b@example.com"}
     again = await portal.client.post(JOB, headers={"X-Job-Secret": "j" * 30})
-    assert again.json()["status"] == "already_sent" and len(portal.mailer.sent) == 2
+    assert again.json()["status"] == "already_sent" and len(portal.mailer.sent) == sent_before + 2
     # the module_state document written by the job must not break the Access Portal
     assert (await portal.client.get(f"{API}/access/modules", headers=h)).status_code == 200
     assert (await portal.client.get(f"{API}/me/modules", headers=h)).status_code == 200

@@ -15,13 +15,14 @@ from fastapi.responses import StreamingResponse
 from app.core import audit
 from app.core.config import PortalConfig
 from app.core.deps import CurrentUser, get_config, get_db, get_settings, require_role
+from app.core.mailer import EmailAttachment, EmailDeliveryError, OutboundEmail
 from app.core.security import decode_access_token, safe_equal
 from app.modules.insights import compute as K
 from app.modules.insights import monthly, report, service
 from app.modules.insights.schemas import (
     BelowCostOut,
-    FinanceOut,
     FiltersOut,
+    FinanceOut,
     LabsOut,
     OverviewOut,
     PatientsOut,
@@ -159,6 +160,45 @@ async def report_pdf(
         io.BytesIO(pdf), media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report.file_name(a)}"'},
     )
+
+
+@router.post("/report.email")
+async def report_email(
+    request: Request,
+    c: Common = Depends(common),
+    sections: str | None = Query(None, description="Comma-separated: overview, finance, labs, patients"),
+    user: CurrentUser = admin,
+    db=Depends(get_db),
+    cfg: PortalConfig = Depends(get_config),
+) -> dict:
+    if not request.app.state.rate_limiter.check(f"insights_report_email:{user.id}", PDF_PER_MINUTE, 60):
+        raise HTTPException(status_code=429, detail="Too many reports. Please wait a minute and try again.")
+    allowed = list(cfg.insights.report.sections)
+    chosen = [s.strip() for s in sections.split(",") if s.strip()] if sections else allowed
+    bad = [s for s in chosen if s not in allowed]
+    if bad or not chosen:
+        raise HTTPException(status_code=422, detail=f"Sections must be from: {', '.join(allowed)}.")
+
+    a = await service.analysis(db, cfg, c.params, refresh=c.refresh)
+    pdf = await asyncio.to_thread(report.render, a, chosen, user.name or user.email, cfg.app.timezone)
+    brand = cfg.app.brand.name
+    try:
+        await request.app.state.mailer.send_email(
+            OutboundEmail(
+                to=str(user.email),
+                subject=f"{brand} business report: {a.range.label()}",
+                text=f"The Business Report for {a.range.label()} is attached.\n\n{brand}",
+                attachments=(EmailAttachment(report.file_name(a), pdf, "application/pdf"),),
+            )
+        )
+    except EmailDeliveryError:
+        raise HTTPException(status_code=502, detail="The report could not be sent. Please try again.") from None
+
+    await audit.record(
+        request, "insights.report_email", actor=user, module=MODULE,
+        target=f"period={a.range.start}..{a.range.end};labs={','.join(a.labs_selected) or 'all'};sections={','.join(chosen)}",
+    )
+    return {"status": "sent"}
 
 
 @router.post("/jobs/report_monthly", include_in_schema=False)

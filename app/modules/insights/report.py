@@ -1,4 +1,4 @@
-"""PDF Business Report: A4, 15 mm margins, text title only (no logo), vector charts, generated on request
+"""PDF Business Report: A4, 15 mm margins, branded header with embedded logo, vector charts, generated on request
 from the same payloads the screens use. Synchronous: callers run it in a thread."""
 
 from __future__ import annotations
@@ -7,6 +7,7 @@ import io
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
@@ -14,18 +15,21 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFError, TTFont
-from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.modules.insights import charts as C
 from app.modules.insights.fmt import RUPEE, compact_inr, hours_text, inr
 
 FONT_DIR = Path(__file__).resolve().parents[2] / "assets" / "fonts"
+BRAND_LOGO = Path(__file__).resolve().parents[2] / "core" / "assets" / "brand-logo.png"
 SLATE = HexColor("#34495E")
+BRAND = HexColor("#E0242A")
 INK = HexColor("#292C2D")
 BODY = HexColor("#3A3D3E")
 MUTED = HexColor("#525656")
 BORDER = HexColor("#D9D5CE")
+IVORY = HexColor("#FAF7F0")
 SECTION_TITLES = {"overview": "Summary", "finance": "Finance", "labs": "Labs", "patients": "Patients"}
 SECTION_ORDER = ("overview", "finance", "labs", "patients")
 WIDTH = A4[0] - 30 * mm
@@ -64,7 +68,7 @@ class _Numbered(canvas.Canvas):
         total = len(self._pages)
         for state in self._pages:
             self.__dict__.update(state)
-            self.setFont(self.font, 7)
+            self.setFont(self.font, 7.5)
             self.setFillColor(MUTED)
             self.drawString(15 * mm, 9 * mm, f"Page {self._pageNumber} of {total}   |   {self.stamp}")
             self.drawRightString(A4[0] - 15 * mm, 9 * mm, self.footer)
@@ -84,21 +88,26 @@ def build_pdf(data: dict[str, dict[str, Any]], meta: dict[str, Any], cfg: Any, f
     axis = lambda v: compact_inr(Decimal(str(v)), sym)  # noqa: E731
     pal = cfg.chart_palette
     st = {
-        "title": ParagraphStyle("t", fontName=fonts.bold, fontSize=17, leading=22, textColor=SLATE, spaceAfter=4),
-        "h1": ParagraphStyle("h1", fontName=fonts.bold, fontSize=13, textColor=SLATE, spaceBefore=2, spaceAfter=6),
-        "h2": ParagraphStyle("h2", fontName=fonts.bold, fontSize=9.5, textColor=INK, spaceBefore=8, spaceAfter=3),
-        "p": ParagraphStyle("p", fontName=fonts.regular, fontSize=8.5, textColor=BODY, leading=11.5),
-        "small": ParagraphStyle("s", fontName=fonts.regular, fontSize=7.5, textColor=MUTED, leading=10),
+        "title": ParagraphStyle("t", fontName=fonts.bold, fontSize=17, leading=21, textColor=BRAND),
+        "h1": ParagraphStyle("h1", fontName=fonts.bold, fontSize=14, leading=18, textColor=SLATE, spaceBefore=2, spaceAfter=8),
+        "h2": ParagraphStyle("h2", fontName=fonts.bold, fontSize=10, leading=13, textColor=INK, spaceBefore=9, spaceAfter=4),
+        "p": ParagraphStyle("p", fontName=fonts.regular, fontSize=9, textColor=BODY, leading=13),
+        "small": ParagraphStyle("s", fontName=fonts.regular, fontSize=8, textColor=MUTED, leading=11),
+        "meta": ParagraphStyle("meta", fontName=fonts.regular, fontSize=8.5, textColor=INK, leading=12),
+        "meta_label": ParagraphStyle("meta-label", fontName=fonts.bold, fontSize=7, textColor=MUTED, leading=9),
     }
 
     def table(rows: list[list[str]], widths: list[float] | None = None, totals: bool = False, right_from: int = 1):
         t = Table(rows, colWidths=widths, repeatRows=1)
         style = [
-            ("FONTNAME", (0, 0), (-1, -1), fonts.regular), ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+            ("FONTNAME", (0, 0), (-1, -1), fonts.regular), ("FONTSIZE", (0, 0), (-1, -1), 8),
             ("TEXTCOLOR", (0, 0), (-1, -1), BODY), ("FONTNAME", (0, 0), (-1, 0), fonts.bold),
-            ("TEXTCOLOR", (0, 0), (-1, 0), SLATE), ("LINEBELOW", (0, 0), (-1, 0), 0.8, SLATE),
-            ("LINEBELOW", (0, 1), (-1, -1), 0.3, BORDER), ("ALIGN", (right_from, 0), (-1, -1), "RIGHT"),
-            ("TOPPADDING", (0, 0), (-1, -1), 2.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5),
+            ("TEXTCOLOR", (0, 0), (-1, 0), SLATE), ("BACKGROUND", (0, 0), (-1, 0), IVORY),
+            ("LINEBELOW", (0, 0), (-1, 0), 0.8, SLATE),
+            ("LINEBELOW", (0, 1), (-1, -1), 0.35, BORDER), ("ALIGN", (right_from, 0), (-1, -1), "RIGHT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), 4), ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ]
         if totals:
             style += [("FONTNAME", (0, -1), (-1, -1), fonts.bold), ("LINEABOVE", (0, -1), (-1, -1), 0.8, SLATE)]
@@ -128,7 +137,9 @@ def build_pdf(data: dict[str, dict[str, Any]], meta: dict[str, Any], cfg: Any, f
         w = WIDTH / len(cells)
         t = Table([cells], colWidths=[w] * len(cells))
         t.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.5, BORDER), ("INNERGRID", (0, 0), (-1, -1), 0.5, BORDER),
-                               ("VALIGN", (0, 0), (-1, -1), "TOP")]))
+                               ("BACKGROUND", (0, 0), (-1, -1), IVORY), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                               ("LEFTPADDING", (0, 0), (-1, -1), 7), ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+                               ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7)]))
         return t
 
     def empty_or(sec: dict) -> list:
@@ -137,12 +148,35 @@ def build_pdf(data: dict[str, dict[str, Any]], meta: dict[str, Any], cfg: Any, f
     def chart_title(text: str):
         return Paragraph(text, st["h2"])
 
-    story: list = [
-        Paragraph("TrustUs Health · Business Report", st["title"]),
-        Paragraph(f"Period: {meta['period']}<br/>Labs: {meta['labs']}<br/>Compare: {meta['compare']}<br/>"
-                  f"Generated: {meta['generated']} by {meta['by']}", st["p"]),
-        Spacer(1, 6),
+    def meta_cell(label: str, value: str):
+        return [
+            Paragraph(escape(label.upper()), st["meta_label"]),
+            Paragraph(escape(value), st["meta"]),
+        ]
+
+    header_title = [
+        Paragraph("BUSINESS REPORT", st["title"]),
+        Paragraph("CONFIDENTIAL · INTERNAL USE", st["small"]),
     ]
+    header = Table([[Image(str(BRAND_LOGO), width=42 * mm, height=17 * mm), header_title]],
+                   colWidths=[50 * mm, WIDTH - 50 * mm])
+    header.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LINEBELOW", (0, 0), (-1, -1), 1.2, BRAND),
+    ]))
+    metadata = Table([
+        [meta_cell("Period", str(meta["period"])), meta_cell("Labs", str(meta["labs"]))],
+        [meta_cell("Compare", str(meta["compare"])), meta_cell("Generated", f"{meta['generated']} by {meta['by']}")],
+    ], colWidths=[WIDTH / 2, WIDTH / 2])
+    metadata.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), IVORY), ("BOX", (0, 0), (-1, -1), 0.5, BORDER),
+        ("INNERGRID", (0, 0), (-1, -1), 0.35, BORDER), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story: list = [header, Spacer(1, 8), metadata, Spacer(1, 8)]
     sections = [s for s in SECTION_ORDER if s in data]
     for i, name in enumerate(sections):
         sec = data[name]
