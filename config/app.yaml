@@ -6,6 +6,7 @@ brand:
   favicon: /brand/favicon.ico
 timezone: Asia/Kolkata
 currency: INR
+fiscal_year_start_month: 4          # April to March; drives "This FY" in Business Insights
 session:
   access_token_minutes: 15
   max_session_hours: 12               # hard cap, refresh never extends past this

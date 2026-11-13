@@ -25,6 +25,44 @@
         "title": "AccessRequestIn",
         "type": "object"
       },
+      "AgeGenderRow": {
+        "properties": {
+          "band": {
+            "title": "Band",
+            "type": "string"
+          },
+          "female": {
+            "title": "Female",
+            "type": "integer"
+          },
+          "male": {
+            "title": "Male",
+            "type": "integer"
+          },
+          "not_recorded": {
+            "title": "Not Recorded",
+            "type": "integer"
+          },
+          "other": {
+            "title": "Other",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "band",
+          "male",
+          "female",
+          "other",
+          "not_recorded",
+          "total"
+        ],
+        "title": "AgeGenderRow",
+        "type": "object"
+      },
       "AppConfigOut": {
         "description": "Non-secret settings the frontend needs (brand, timezone, ...). Public: used by the login page.",
         "properties": {
@@ -77,6 +115,169 @@
         "title": "AppConfigOut",
         "type": "object"
       },
+      "AttentionChip": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "link": {
+            "title": "Link",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "count",
+          "link"
+        ],
+        "title": "AttentionChip",
+        "type": "object"
+      },
+      "BelowCostItem": {
+        "properties": {
+          "bill_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No"
+          },
+          "billed": {
+            "title": "Billed",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "lab_cost": {
+            "title": "Lab Cost",
+            "type": "string"
+          },
+          "lab_name": {
+            "title": "Lab Name",
+            "type": "string"
+          },
+          "margin": {
+            "title": "Margin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bill_no",
+          "date",
+          "lab",
+          "lab_name",
+          "billed",
+          "lab_cost",
+          "margin"
+        ],
+        "title": "BelowCostItem",
+        "type": "object"
+      },
+      "BelowCostOut": {
+        "properties": {
+          "compare_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Notes",
+            "type": "array"
+          },
+          "empty": {
+            "title": "Empty",
+            "type": "boolean"
+          },
+          "empty_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Message"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FiltersEcho"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "grain": {
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BelowCostItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeOut"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "range",
+          "compare_range",
+          "grain",
+          "generated_at",
+          "data_notes",
+          "empty",
+          "empty_message",
+          "filters",
+          "total",
+          "truncated",
+          "items"
+        ],
+        "title": "BelowCostOut",
+        "type": "object"
+      },
       "Body_patient_registry_parse_entry_report": {
         "properties": {
           "file": {
@@ -94,6 +295,74 @@
           "file"
         ],
         "title": "Body_patient_registry_parse_entry_report",
+        "type": "object"
+      },
+      "CostStatement": {
+        "properties": {
+          "grand_total": {
+            "title": "Grand Total",
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthRef"
+            },
+            "title": "Months",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CostStatementRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Totals",
+            "type": "object"
+          }
+        },
+        "required": [
+          "months",
+          "rows",
+          "totals",
+          "grand_total"
+        ],
+        "title": "CostStatement",
+        "type": "object"
+      },
+      "CostStatementRow": {
+        "properties": {
+          "cells": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Cells",
+            "type": "object"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "cells",
+          "total"
+        ],
+        "title": "CostStatementRow",
         "type": "object"
       },
       "CustomerDetailOut": {
@@ -311,6 +580,41 @@
           "created_at"
         ],
         "title": "CustomerOut",
+        "type": "object"
+      },
+      "DiscountPoint": {
+        "properties": {
+          "discount_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Rate Pct"
+          },
+          "discounts": {
+            "title": "Discounts",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "discounts",
+          "discount_rate_pct"
+        ],
+        "title": "DiscountPoint",
         "type": "object"
       },
       "DuplicateDecisionOut": {
@@ -1617,6 +1921,249 @@
         "title": "FieldOut",
         "type": "object"
       },
+      "FiltersEcho": {
+        "properties": {
+          "compare": {
+            "title": "Compare",
+            "type": "string"
+          },
+          "labs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Labs",
+            "type": "array"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "labs",
+          "compare"
+        ],
+        "title": "FiltersEcho",
+        "type": "object"
+      },
+      "FiltersOut": {
+        "properties": {
+          "compare_options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "title": "Compare Options",
+            "type": "array"
+          },
+          "default_compare": {
+            "title": "Default Compare",
+            "type": "string"
+          },
+          "default_period": {
+            "title": "Default Period",
+            "type": "string"
+          },
+          "earliest_data_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earliest Data Date"
+          },
+          "labs": {
+            "items": {
+              "$ref": "#/components/schemas/LabFilter"
+            },
+            "title": "Labs",
+            "type": "array"
+          },
+          "palette": {
+            "$ref": "#/components/schemas/PaletteOut"
+          },
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/PresetOut"
+            },
+            "title": "Presets",
+            "type": "array"
+          },
+          "report_sections": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Report Sections",
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "today": {
+            "title": "Today",
+            "type": "string"
+          }
+        },
+        "required": [
+          "presets",
+          "default_period",
+          "default_compare",
+          "compare_options",
+          "labs",
+          "earliest_data_date",
+          "today",
+          "thresholds",
+          "palette",
+          "report_sections"
+        ],
+        "title": "FiltersOut",
+        "type": "object"
+      },
+      "FinanceOut": {
+        "properties": {
+          "compare_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Notes",
+            "type": "array"
+          },
+          "discounts": {
+            "items": {
+              "$ref": "#/components/schemas/DiscountPoint"
+            },
+            "title": "Discounts",
+            "type": "array"
+          },
+          "empty": {
+            "title": "Empty",
+            "type": "boolean"
+          },
+          "empty_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Message"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FiltersEcho"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "grain": {
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/KpiOut"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "lab_table": {
+            "$ref": "#/components/schemas/LabTable"
+          },
+          "low_margin_threshold_pct": {
+            "title": "Low Margin Threshold Pct",
+            "type": "number"
+          },
+          "margin_by_lab": {
+            "items": {
+              "$ref": "#/components/schemas/MarginByLab"
+            },
+            "title": "Margin By Lab",
+            "type": "array"
+          },
+          "money_split": {
+            "items": {
+              "$ref": "#/components/schemas/MoneySplit"
+            },
+            "title": "Money Split",
+            "type": "array"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeOut"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/FinanceStats"
+          }
+        },
+        "required": [
+          "range",
+          "compare_range",
+          "grain",
+          "generated_at",
+          "data_notes",
+          "empty",
+          "empty_message",
+          "filters",
+          "kpis",
+          "money_split",
+          "margin_by_lab",
+          "low_margin_threshold_pct",
+          "discounts",
+          "lab_table",
+          "stats"
+        ],
+        "title": "FinanceOut",
+        "type": "object"
+      },
+      "FinanceStats": {
+        "properties": {
+          "avg_bill_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Bill Value"
+          },
+          "awaiting_billing": {
+            "title": "Awaiting Billing",
+            "type": "integer"
+          },
+          "below_cost_bills": {
+            "title": "Below Cost Bills",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "avg_bill_value",
+          "awaiting_billing",
+          "below_cost_bills"
+        ],
+        "title": "FinanceStats",
+        "type": "object"
+      },
       "GrantIn": {
         "properties": {
           "module": {
@@ -1802,6 +2349,491 @@
         "title": "JobOut",
         "type": "object"
       },
+      "KpiOut": {
+        "properties": {
+          "compare_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare Value"
+          },
+          "delta_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Pct"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "up",
+                  "down",
+                  "flat",
+                  "new"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "money",
+              "count",
+              "percent"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "sparkline": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Sparkline",
+            "type": "array"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "kind",
+          "value",
+          "compare_value",
+          "delta_pct",
+          "direction",
+          "detail",
+          "sparkline"
+        ],
+        "title": "KpiOut",
+        "type": "object"
+      },
+      "LabCard": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "margin_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Pct"
+          },
+          "median_turnaround_display": {
+            "title": "Median Turnaround Display",
+            "type": "string"
+          },
+          "median_turnaround_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Turnaround Hours"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "visits": {
+            "title": "Visits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color",
+          "visits",
+          "billed_revenue",
+          "margin_pct",
+          "median_turnaround_hours",
+          "median_turnaround_display"
+        ],
+        "title": "LabCard",
+        "type": "object"
+      },
+      "LabFilter": {
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "color"
+        ],
+        "title": "LabFilter",
+        "type": "object"
+      },
+      "LabFinanceRow": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "billed_visits": {
+            "title": "Billed Visits",
+            "type": "integer"
+          },
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "discount_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Rate Pct"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "lab_cost": {
+            "title": "Lab Cost",
+            "type": "string"
+          },
+          "margin": {
+            "title": "Margin",
+            "type": "string"
+          },
+          "margin_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Pct"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color",
+          "billed_visits",
+          "billed_revenue",
+          "lab_cost",
+          "margin",
+          "margin_pct",
+          "discount_rate_pct"
+        ],
+        "title": "LabFinanceRow",
+        "type": "object"
+      },
+      "LabFinanceTotals": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "billed_visits": {
+            "title": "Billed Visits",
+            "type": "integer"
+          },
+          "discount_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Rate Pct"
+          },
+          "lab_cost": {
+            "title": "Lab Cost",
+            "type": "string"
+          },
+          "margin": {
+            "title": "Margin",
+            "type": "string"
+          },
+          "margin_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Pct"
+          }
+        },
+        "required": [
+          "billed_visits",
+          "billed_revenue",
+          "lab_cost",
+          "margin",
+          "margin_pct",
+          "discount_rate_pct"
+        ],
+        "title": "LabFinanceTotals",
+        "type": "object"
+      },
+      "LabRef": {
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color"
+        ],
+        "title": "LabRef",
+        "type": "object"
+      },
+      "LabTable": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/LabFinanceRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/LabFinanceTotals"
+          }
+        },
+        "required": [
+          "rows",
+          "totals"
+        ],
+        "title": "LabTable",
+        "type": "object"
+      },
+      "LabsOut": {
+        "properties": {
+          "compare_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Notes",
+            "type": "array"
+          },
+          "empty": {
+            "title": "Empty",
+            "type": "boolean"
+          },
+          "empty_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Message"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FiltersEcho"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "grain": {
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "lab_cards": {
+            "items": {
+              "$ref": "#/components/schemas/LabCard"
+            },
+            "title": "Lab Cards",
+            "type": "array"
+          },
+          "lab_cost_statement": {
+            "$ref": "#/components/schemas/CostStatement"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeOut"
+          },
+          "turnaround": {
+            "items": {
+              "$ref": "#/components/schemas/TurnaroundRow"
+            },
+            "title": "Turnaround",
+            "type": "array"
+          },
+          "visits_by_lab": {
+            "$ref": "#/components/schemas/VisitsByLab"
+          }
+        },
+        "required": [
+          "range",
+          "compare_range",
+          "grain",
+          "generated_at",
+          "data_notes",
+          "empty",
+          "empty_message",
+          "filters",
+          "lab_cards",
+          "visits_by_lab",
+          "turnaround",
+          "lab_cost_statement"
+        ],
+        "title": "LabsOut",
+        "type": "object"
+      },
+      "MarginByLab": {
+        "properties": {
+          "below_threshold": {
+            "title": "Below Threshold",
+            "type": "boolean"
+          },
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "margin_pct": {
+            "title": "Margin Pct",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color",
+          "margin_pct",
+          "below_threshold"
+        ],
+        "title": "MarginByLab",
+        "type": "object"
+      },
       "MatrixColumn": {
         "properties": {
           "label": {
@@ -1927,6 +2959,108 @@
         "title": "ModuleAdminOut",
         "type": "object"
       },
+      "MoneySplit": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "lab_cost": {
+            "title": "Lab Cost",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "margin": {
+            "title": "Margin",
+            "type": "string"
+          },
+          "revenue_no_cost": {
+            "title": "Revenue No Cost",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "lab_cost",
+          "margin",
+          "revenue_no_cost",
+          "billed_revenue"
+        ],
+        "title": "MoneySplit",
+        "type": "object"
+      },
+      "MonthRef": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "MonthRef",
+        "type": "object"
+      },
+      "NewReturningPoint": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "new": {
+            "title": "New",
+            "type": "integer"
+          },
+          "returning": {
+            "title": "Returning",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "new",
+          "returning"
+        ],
+        "title": "NewReturningPoint",
+        "type": "object"
+      },
+      "OptionOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "OptionOut",
+        "type": "object"
+      },
       "OtpRequestIn": {
         "properties": {
           "email": {
@@ -1980,6 +3114,131 @@
           "code"
         ],
         "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "OverviewOut": {
+        "properties": {
+          "attention": {
+            "items": {
+              "$ref": "#/components/schemas/AttentionChip"
+            },
+            "title": "Attention",
+            "type": "array"
+          },
+          "compare_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Notes",
+            "type": "array"
+          },
+          "empty": {
+            "title": "Empty",
+            "type": "boolean"
+          },
+          "empty_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Message"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FiltersEcho"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "grain": {
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "highlights": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Highlights",
+            "type": "array"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/KpiOut"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeOut"
+          },
+          "revenue_by_lab": {
+            "items": {
+              "$ref": "#/components/schemas/RevenueByLab"
+            },
+            "title": "Revenue By Lab",
+            "type": "array"
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/TrendPoint"
+            },
+            "title": "Trend",
+            "type": "array"
+          }
+        },
+        "required": [
+          "range",
+          "compare_range",
+          "grain",
+          "generated_at",
+          "data_notes",
+          "empty",
+          "empty_message",
+          "filters",
+          "kpis",
+          "highlights",
+          "trend",
+          "revenue_by_lab",
+          "attention"
+        ],
+        "title": "OverviewOut",
+        "type": "object"
+      },
+      "PaletteOut": {
+        "properties": {
+          "compare_line": {
+            "title": "Compare Line",
+            "type": "string"
+          },
+          "others": {
+            "title": "Others",
+            "type": "string"
+          }
+        },
+        "required": [
+          "others",
+          "compare_line"
+        ],
+        "title": "PaletteOut",
         "type": "object"
       },
       "ParseOut": {
@@ -2240,6 +3499,199 @@
         "title": "PartnerOut",
         "type": "object"
       },
+      "PatientsOut": {
+        "properties": {
+          "age_gender": {
+            "items": {
+              "$ref": "#/components/schemas/AgeGenderRow"
+            },
+            "title": "Age Gender",
+            "type": "array"
+          },
+          "compare_range": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RangeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Data Notes",
+            "type": "array"
+          },
+          "empty": {
+            "title": "Empty",
+            "type": "boolean"
+          },
+          "empty_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empty Message"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/FiltersEcho"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "grain": {
+            "enum": [
+              "day",
+              "week",
+              "month"
+            ],
+            "title": "Grain",
+            "type": "string"
+          },
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/KpiOut"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "new_vs_returning": {
+            "items": {
+              "$ref": "#/components/schemas/NewReturningPoint"
+            },
+            "title": "New Vs Returning",
+            "type": "array"
+          },
+          "range": {
+            "$ref": "#/components/schemas/RangeOut"
+          },
+          "repeat_building": {
+            "title": "Repeat Building",
+            "type": "boolean"
+          },
+          "top_referrers": {
+            "$ref": "#/components/schemas/TopReferrers"
+          },
+          "top_tests": {
+            "$ref": "#/components/schemas/TopTests"
+          }
+        },
+        "required": [
+          "range",
+          "compare_range",
+          "grain",
+          "generated_at",
+          "data_notes",
+          "empty",
+          "empty_message",
+          "filters",
+          "kpis",
+          "repeat_building",
+          "new_vs_returning",
+          "age_gender",
+          "top_tests",
+          "top_referrers"
+        ],
+        "title": "PatientsOut",
+        "type": "object"
+      },
+      "PresetOut": {
+        "properties": {
+          "compare_end": {
+            "title": "Compare End",
+            "type": "string"
+          },
+          "compare_start": {
+            "title": "Compare Start",
+            "type": "string"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "start",
+          "end",
+          "compare_start",
+          "compare_end"
+        ],
+        "title": "PresetOut",
+        "type": "object"
+      },
+      "RangeOut": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "label"
+        ],
+        "title": "RangeOut",
+        "type": "object"
+      },
+      "ReferrerRow": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "referrer": {
+            "title": "Referrer",
+            "type": "string"
+          },
+          "share_pct": {
+            "title": "Share Pct",
+            "type": "number"
+          },
+          "visits": {
+            "title": "Visits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "referrer",
+          "visits",
+          "billed_revenue",
+          "share_pct"
+        ],
+        "title": "ReferrerRow",
+        "type": "object"
+      },
       "ReportRefOut": {
         "properties": {
           "content_type": {
@@ -2277,6 +3729,44 @@
           "created_at"
         ],
         "title": "ReportRefOut",
+        "type": "object"
+      },
+      "RevenueByLab": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "share_pct": {
+            "title": "Share Pct",
+            "type": "number"
+          },
+          "visits": {
+            "title": "Visits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color",
+          "billed_revenue",
+          "share_pct",
+          "visits"
+        ],
+        "title": "RevenueByLab",
         "type": "object"
       },
       "SaveOut": {
@@ -2358,6 +3848,42 @@
           "kind"
         ],
         "title": "SubmoduleOut",
+        "type": "object"
+      },
+      "TestRow": {
+        "properties": {
+          "test": {
+            "title": "Test",
+            "type": "string"
+          },
+          "visits": {
+            "title": "Visits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "test",
+          "visits"
+        ],
+        "title": "TestRow",
+        "type": "object"
+      },
+      "ThresholdsOut": {
+        "properties": {
+          "high_discount_pct": {
+            "title": "High Discount Pct",
+            "type": "number"
+          },
+          "low_margin_pct": {
+            "title": "Low Margin Pct",
+            "type": "number"
+          }
+        },
+        "required": [
+          "low_margin_pct",
+          "high_discount_pct"
+        ],
+        "title": "ThresholdsOut",
         "type": "object"
       },
       "TileOut": {
@@ -2443,6 +3969,212 @@
           "user"
         ],
         "title": "TokenOut",
+        "type": "object"
+      },
+      "TopReferrers": {
+        "properties": {
+          "others": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReferrerRow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/ReferrerRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "others"
+        ],
+        "title": "TopReferrers",
+        "type": "object"
+      },
+      "TopTests": {
+        "properties": {
+          "others": {
+            "title": "Others",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TestRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "others"
+        ],
+        "title": "TopTests",
+        "type": "object"
+      },
+      "TrendPoint": {
+        "properties": {
+          "billed_revenue": {
+            "title": "Billed Revenue",
+            "type": "string"
+          },
+          "billed_visits": {
+            "title": "Billed Visits",
+            "type": "integer"
+          },
+          "compare_billed_revenue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare Billed Revenue"
+          },
+          "discount_rate_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Rate Pct"
+          },
+          "discounts": {
+            "title": "Discounts",
+            "type": "string"
+          },
+          "gross_billed": {
+            "title": "Gross Billed",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "lab_cost": {
+            "title": "Lab Cost",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "margin": {
+            "title": "Margin",
+            "type": "string"
+          },
+          "new": {
+            "title": "New",
+            "type": "integer"
+          },
+          "patients": {
+            "title": "Patients",
+            "type": "integer"
+          },
+          "returning": {
+            "title": "Returning",
+            "type": "integer"
+          },
+          "revenue_no_cost": {
+            "title": "Revenue No Cost",
+            "type": "string"
+          },
+          "visits": {
+            "title": "Visits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "visits",
+          "billed_visits",
+          "billed_revenue",
+          "margin",
+          "lab_cost",
+          "revenue_no_cost",
+          "gross_billed",
+          "discounts",
+          "discount_rate_pct",
+          "patients",
+          "new",
+          "returning"
+        ],
+        "title": "TrendPoint",
+        "type": "object"
+      },
+      "TurnaroundRow": {
+        "properties": {
+          "color": {
+            "title": "Color",
+            "type": "string"
+          },
+          "lab": {
+            "title": "Lab",
+            "type": "string"
+          },
+          "median_display": {
+            "title": "Median Display",
+            "type": "string"
+          },
+          "median_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Hours"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sample": {
+            "title": "Sample",
+            "type": "integer"
+          },
+          "slowest_10_display": {
+            "title": "Slowest 10 Display",
+            "type": "string"
+          },
+          "slowest_10_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slowest 10 Hours"
+          }
+        },
+        "required": [
+          "lab",
+          "name",
+          "color",
+          "median_hours",
+          "slowest_10_hours",
+          "median_display",
+          "slowest_10_display",
+          "sample"
+        ],
+        "title": "TurnaroundRow",
         "type": "object"
       },
       "UserAdminOut": {
@@ -2646,6 +4378,56 @@
           "visible_to_staff"
         ],
         "title": "VisibilityIn",
+        "type": "object"
+      },
+      "VisitsByLab": {
+        "properties": {
+          "labs": {
+            "items": {
+              "$ref": "#/components/schemas/LabRef"
+            },
+            "title": "Labs",
+            "type": "array"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/VisitsByLabPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "labs",
+          "points"
+        ],
+        "title": "VisitsByLab",
+        "type": "object"
+      },
+      "VisitsByLabPoint": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "counts"
+        ],
+        "title": "VisitsByLabPoint",
         "type": "object"
       },
       "WorkbookOut": {
@@ -3480,6 +5262,1081 @@
         "summary": "Partners For Module",
         "tags": [
           "config"
+        ]
+      }
+    },
+    "/api/v1/insights/below_cost": {
+      "get": {
+        "operationId": "insights_below_cost",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BelowCostOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Below Cost",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/filters": {
+      "get": {
+        "operationId": "insights_filters",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FiltersOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Filters",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/finance": {
+      "get": {
+        "operationId": "insights_finance",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinanceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Finance",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/labs": {
+      "get": {
+        "operationId": "insights_labs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Labs",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/overview": {
+      "get": {
+        "operationId": "insights_overview",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Overview",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/patients": {
+      "get": {
+        "operationId": "insights_patients",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patients",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/report.email": {
+      "post": {
+        "operationId": "insights_report_email",
+        "parameters": [
+          {
+            "description": "Comma-separated: overview, finance, labs, patients",
+            "in": "query",
+            "name": "sections",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: overview, finance, labs, patients",
+              "title": "Sections"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Insights Report Email",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Report Email",
+        "tags": [
+          "insights"
+        ]
+      }
+    },
+    "/api/v1/insights/report.pdf": {
+      "get": {
+        "operationId": "insights_report_pdf",
+        "parameters": [
+          {
+            "description": "Comma-separated: overview, finance, labs, patients",
+            "in": "query",
+            "name": "sections",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated: overview, finance, labs, patients",
+              "title": "Sections"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "this_month",
+                    "last_month",
+                    "last_3_months",
+                    "this_fy",
+                    "last_fy",
+                    "custom"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "description": "Comma-separated lab keys; empty means all labs",
+            "in": "query",
+            "name": "labs",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated lab keys; empty means all labs",
+              "title": "Labs"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compare",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "previous",
+                    "last_year",
+                    "none"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Compare"
+            }
+          },
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Report Pdf",
+        "tags": [
+          "insights"
         ]
       }
     },
