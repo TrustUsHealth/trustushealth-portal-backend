@@ -4,6 +4,7 @@ from app.core import audit
 from app.core.config import PortalConfig, Settings
 from app.core.db import utcnow
 from app.core.deps import CurrentUser, get_config, get_current_user, get_db, get_mailer, get_settings
+from app.core.email_templates import otp_email_body
 from app.core.mailer import Mailer, OutboundEmail
 from app.core.security import normalize_email, rate_limit
 from app.modules.auth import service
@@ -66,6 +67,7 @@ async def request_otp(
                 to=normalize_email(body.email),
                 subject=mail.subject.format(**fmt),
                 text=mail.body.format(**fmt),
+                html=otp_email_body(mail.body.format(**fmt), decision.code),
             ),
         )
     await audit.record(
