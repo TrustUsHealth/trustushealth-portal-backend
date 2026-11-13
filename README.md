@@ -9,7 +9,7 @@ configuration and dashboard APIs, and the initial Access Portal. The product sco
 | # | Build | Status |
 |---|---|---|
 | 0 | **Foundation** (this repo's part) | **Done:** config loader + validation, email-OTP login, RBAC, module auto-discovery, Access Portal API, dashboard tiles API, audit writing, Docker Compose, CI/CD |
-| 0 | Foundation (frontend repo, Render/Cloudflare setup) | Pending: separate repo / manual hosting setup |
+| 0 | Foundation (frontend repo, Render setup) | **Done**: separate repo / manual hosting setup |
 | 1 | `patient_registry` | **Done (backend):** lab-first upload + manual entries, generic YAML parsing engine (Spectrum, Metropolis), standard field list, atomic `bill_no`, duplicate rules, customers, yearly Excel register with monthly send job |
 | 2-6 | `bill_generator`, `reports`, `delivery`, `logs`, `analytics` | Not started |
 
@@ -70,11 +70,11 @@ stack. Compose data is stored in the `mongo-data` Docker volume.
 Stop with `Ctrl+C`; run `docker compose down` to stop and remove containers. This preserves the database volume.
 To also reset local demo data, run `docker compose down --volumes` (this deletes the named MongoDB data volume).
 
-## Option B: use your real MongoDB and Gmail account
+## Option B: use your real MongoDB and Google Apps Script email
 
 This is the recommended way to test actual third-party connections. Run the API directly on your machine so Compose's
-local MongoDB and Mailpit settings do not replace your Atlas/Gmail settings. Alternatively, Compose can use Gmail
-when `MAIL_TRANSPORT=gmail` is set in `.env`.
+local MongoDB and Mailpit settings do not replace your Atlas settings. For Render Free, configure the
+Google Apps Script mail transport below.
 
 ### MongoDB Atlas
 
@@ -84,22 +84,40 @@ when `MAIL_TRANSPORT=gmail` is set in `.env`.
 3. Copy the Atlas `mongodb+srv://...` connection string. Replace its username/password placeholders, URL-encode
    reserved characters in credentials, and include the database name if needed.
 
-### Gmail SMTP App Password
+### Google Apps Script Gmail delivery (Render Free)
 
-For this personal, low-volume sender, the backend uses Gmail SMTP over TLS on `smtp.gmail.com:465`. This is simpler to
-operate than Gmail API OAuth for a single sending account and requires no custom domain, OAuth client, or billing
-account. It supports text/HTML and file attachments. Gmail enforces its own sending limits and anti-abuse rules; this
-is not suitable for bulk or marketing mail.
+The `google_apps_script` transport sends mail by HTTPS to a Google Apps Script web app, which uses `MailApp` to send
+from the Google account that owns the script. It avoids outbound SMTP and requires no paid provider, custom domain, or
+separate hosting. Gmail and Apps Script quotas still apply; this is intended for low-volume transactional email, not
+bulk mail.
 
-1. In your Google Account, enable **2-Step Verification**.
-2. Create an **App Password** in Google Account security settings. Google may hide this option for some account types
-   or security configurations.
-3. Use your Gmail address and the generated App Password below (paste the 16 characters without spaces). Do not use
-   your normal Google password. Store the App Password only in `.env` locally or in the deployment platform's secret
-   settings; revoke it in Google if exposed.
+1. Sign in to [Google Apps Script](https://script.google.com/) with the Gmail account that should send the emails.
+2. Create a project and copy [`scripts/google_apps_script.gs`](scripts/google_apps_script.gs) into its `Code.gs` file.
+3. Generate a random secret of at least 32 characters (for example,
+   `python -c "import secrets; print(secrets.token_urlsafe(32))"`). In **Project Settings → Script Properties**, add
+   `GOOGLE_SCRIPT_SECRET` with that value. Do not put the secret in the script source or a URL.
+4. Choose **Deploy → New deployment → Web app**. Set **Execute as** to **Me** and **Who has access** to **Anyone**,
+   then deploy and authorize the requested Gmail permission. Copy the deployed web app URL ending in `/exec`.
+5. In Render's backend service **Environment** settings, set:
 
-The password is sent only to Gmail's SMTP server over TLS. The application strips spaces from Google's displayed
-16-character App Password before login. Gmail credentials are not used in the frontend.
+   ```dotenv
+   MAIL_TRANSPORT=google_apps_script
+   GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/<deployment-id>/exec
+   GOOGLE_SCRIPT_SECRET=<the-same-random-secret>
+   ```
+
+   Keep the URL and secret only in backend environment settings; never put them in frontend configuration. The secret
+   must match the Apps Script property. Do not share it or print it in logs.
+6. Deploy/restart the backend, request an OTP for an invited account, and confirm delivery in the recipient inbox
+   (including spam). Render's `202` response means the request was accepted; it does not guarantee delivery.
+
+The script stores an idempotency marker before sending and keeps it for 24 hours. Backend retries reuse the same
+delivery key, so a response lost after sending will not cause a duplicate. As with any at-most-once mechanism, if the
+script stops after recording the marker but before sending, that email is not automatically resent. There is no durable
+email queue. When changing the Apps Script code, create a new deployment version and update the existing deployment.
+
+For local development, use `MAIL_TRANSPORT=smtp` with Mailpit. The optional `gmail` transport still uses Gmail SMTP and
+requires `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`; it may not work on hosts that restrict outbound SMTP.
 
 ### Run the API against those services (Windows PowerShell)
 
@@ -119,19 +137,18 @@ MONGODB_URI=mongodb+srv://<db-user>:<url-encoded-password>@<cluster-host>/<datab
 MONGODB_DB=trustushealth
 JWT_SECRET=<a-random-secret-at-least-32-characters>
 BOOTSTRAP_ADMIN_EMAIL=<an-inbox-you-can-read>
-MAIL_TRANSPORT=gmail
-GMAIL_ADDRESS=<your-gmail-address@gmail.com>
-GMAIL_APP_PASSWORD=<your-google-app-password>
+MAIL_TRANSPORT=google_apps_script
+GOOGLE_SCRIPT_URL=https://script.google.com/macros/s/<deployment-id>/exec
+GOOGLE_SCRIPT_SECRET=<the-same-random-secret-configured-in-Apps-Script>
 ```
 
-If `.env` already exists, edit it in place instead of overwriting it. Remove the old `RESEND_API_KEY` and any obsolete
-`MAIL_FROM`/`MAIL_TRANSPORT=resend` values; set `MAIL_TRANSPORT=gmail` and the Gmail variables above. An existing
-`MAIL_TRANSPORT=resend` is no longer valid. If a Resend API key was previously configured, revoke it at its provider.
+If `.env` already exists, edit it in place instead of overwriting it. Set the Apps Script environment variables above
+for Render; local Compose can continue using SMTP with Mailpit.
 
-Generate a secret rather than using the example value. `.env` is ignored by Git; do not commit it, paste its contents
+Generate a secret rather than using an example value. `.env` is ignored by Git; do not commit it, paste its contents
 into chat, or add credentials to Postman. The `Settings` class loads these values from environment variables / `.env`;
-when deploying, configure them as platform secrets instead of uploading `.env`. Verify that the hosting provider allows
-outbound TCP to Gmail SMTP on port 465 before deploying. Start the server:
+when deploying, configure them as platform secrets instead of uploading `.env`. The Apps Script URL and shared secret
+are used only by the backend and are never exposed to the frontend. Start the server:
 
 ```powershell
 ./.venv/Scripts/uvicorn.exe app.main:create_app --factory --host 127.0.0.1 --port 8000 --reload
@@ -140,9 +157,10 @@ outbound TCP to Gmail SMTP on port 465 before deploying. Start the server:
 The first startup creates the bootstrap Admin if that email is not already registered. Request an OTP for that exact
 address, check the destination inbox (and application logs), then verify the code. `GET /healthz` is deliberately cheap
 and does not prove MongoDB or email connectivity: successful OTP request/verification exercises MongoDB, and receiving
-the OTP exercises Gmail. OTP delivery runs as a FastAPI background task; the request's `202` response does **not**
-guarantee delivery. Transient SMTP/network errors are retried up to two times with short delays, then logged without
-the recipient, message, OTP, or credentials. There is no durable queue or retry after the process exits.
+the OTP exercises the configured mail transport. OTP delivery runs as a FastAPI background task; the request's `202`
+response does **not** guarantee delivery. Transient transport failures are retried up to two times with short delays;
+logs omit the recipient, message, OTP, response body, and credentials. There is no durable queue or retry after the
+process exits.
 
 Keep `ENVIRONMENT=local` for local HTTP testing; production enables secure cookies and disables Swagger docs. Never
 expose a production deployment over plain HTTP.
