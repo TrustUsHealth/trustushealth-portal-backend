@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
@@ -42,11 +43,13 @@ class Settings(BaseSettings):
     bootstrap_admin_email: EmailStr | None = None
     config_dir: Path = Path("config")
 
-    mail_transport: Literal["smtp", "gmail"] = "smtp"
+    mail_transport: Literal["smtp", "gmail", "google_apps_script"] = "smtp"
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     gmail_address: EmailStr | None = None
     gmail_app_password: SecretStr | None = None
+    google_script_url: str | None = None
+    google_script_secret: SecretStr | None = None
 
     job_secret: str | None = Field(default=None, min_length=24)
     admin_report_emails: str | None = None
@@ -57,12 +60,20 @@ class Settings(BaseSettings):
         return self.environment == "production"  # plain http is only allowed for local/test
 
     @model_validator(mode="after")
-    def _gmail_needs_credentials(self) -> Settings:
+    def _email_transport_needs_credentials(self) -> Settings:
         if self.mail_transport == "gmail":
             if not self.gmail_address:
                 raise ValueError("GMAIL_ADDRESS is required when MAIL_TRANSPORT=gmail")
             if not self.gmail_app_password or not self.gmail_app_password.get_secret_value().strip():
                 raise ValueError("GMAIL_APP_PASSWORD is required when MAIL_TRANSPORT=gmail")
+        elif self.mail_transport == "google_apps_script":
+            if not self.google_script_url:
+                raise ValueError("GOOGLE_SCRIPT_URL is required when MAIL_TRANSPORT=google_apps_script")
+            parsed_url = urlsplit(self.google_script_url)
+            if parsed_url.scheme != "https" or parsed_url.hostname != "script.google.com":
+                raise ValueError("GOOGLE_SCRIPT_URL must be an HTTPS Google Apps Script URL")
+            if not self.google_script_secret or len(self.google_script_secret.get_secret_value()) < 32:
+                raise ValueError("GOOGLE_SCRIPT_SECRET must be at least 32 characters")
         return self
 
 
