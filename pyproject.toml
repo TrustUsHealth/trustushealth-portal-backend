@@ -21,6 +21,9 @@ dependencies = [
   "rapidfuzz>=3.9",           # duplicate detection
   "openpyxl>=3.1",            # Excel register
   "reportlab>=4.2",           # Business Insights PDF report (vector charts, embedded Noto Sans)
+  "google-api-python-client>=2.150",
+  "google-auth>=2.35",
+  "google-auth-oauthlib>=1.2",
 ]
 
 [project.optional-dependencies]

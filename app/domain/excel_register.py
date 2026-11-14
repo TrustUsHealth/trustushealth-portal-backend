@@ -93,7 +93,9 @@ def _fill_sheet(ws, cfg: PortalConfig, entries: list[dict[str, Any]]) -> None:
     ws.auto_filter.ref = f"A1:{get_column_letter(len(headers) - 1)}{max(len(entries) + 1, 1)}"
 
 
-def _render(cfg: PortalConfig, base: bytes | None, data: dict[int, list[dict[str, Any]]], months: set[int] | None) -> bytes:
+def _render(
+    cfg: PortalConfig, base: bytes | None, data: dict[int, list[dict[str, Any]]], months: set[int] | None
+) -> bytes:
     wb = None
     if base is not None and months is not None:
         try:
@@ -141,12 +143,19 @@ async def _save_year(db: AsyncDatabase, cfg: PortalConfig, year: int, months: se
             data = {m: await _month_entries(db, year, m) for m in (range(1, 13) if want is None else want)}
             base = bytes(doc["file"]["data"]) if doc is not None and want is not None else None
             content = await asyncio.to_thread(_render, cfg, base, data, want)
-            fdoc = _store.pack(name=filename_for(cfg, year), content_type=XLSX, data=content)
+            fdoc = await _store.pack(name=filename_for(cfg, year), content_type=XLSX, data=content)
             now = utcnow()
             if doc is None:
                 try:
                     await db[COL].insert_one(
-                        {"year": year, "version": 1, "file": fdoc, "last_sent_month": None, "created_at": now, "updated_at": now}
+                        {
+                            "year": year,
+                            "version": 1,
+                            "file": fdoc,
+                            "last_sent_month": None,
+                            "created_at": now,
+                            "updated_at": now,
+                        }
                     )
                     return
                 except DuplicateKeyError:
@@ -214,9 +223,7 @@ def _mail(cfg: PortalConfig, to: str, year: int, label: str, content: bytes) -> 
     )
 
 
-async def send_now(
-    db: AsyncDatabase, cfg: PortalConfig, settings: Settings, mailer: Mailer, year: int
-) -> list[str]:
+async def send_now(db: AsyncDatabase, cfg: PortalConfig, settings: Settings, mailer: Mailer, year: int) -> list[str]:
     """Admin 'Send now': fresh workbook to every recipient. Raises EmailDeliveryError if any send fails."""
     to = recipients(cfg, settings)
     if not to:

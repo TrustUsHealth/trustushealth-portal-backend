@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     mongodb_uri: str
     mongodb_db: str = "trustushealth"
     jwt_secret: str = Field(min_length=32)
+    file_store: Literal["mongo", "drive"] = "mongo"
+    gdrive_client_id: str | None = None
+    gdrive_client_secret: SecretStr | None = None
+    gdrive_refresh_token: SecretStr | None = None
+    gdrive_root_folder_id: str | None = None
     frontend_origin: str = "http://localhost:3000"
     bootstrap_admin_email: EmailStr | None = None
     config_dir: Path = Path("config")
@@ -75,6 +80,20 @@ class Settings(BaseSettings):
                 raise ValueError("GOOGLE_SCRIPT_URL must be an HTTPS Google Apps Script URL")
             if not self.google_script_secret or len(self.google_script_secret.get_secret_value()) < 32:
                 raise ValueError("GOOGLE_SCRIPT_SECRET must be at least 32 characters")
+        if self.file_store == "drive":
+            credentials = {
+                "GDRIVE_CLIENT_ID": self.gdrive_client_id,
+                "GDRIVE_CLIENT_SECRET": (
+                    self.gdrive_client_secret.get_secret_value() if self.gdrive_client_secret else None
+                ),
+                "GDRIVE_REFRESH_TOKEN": (
+                    self.gdrive_refresh_token.get_secret_value() if self.gdrive_refresh_token else None
+                ),
+                "GDRIVE_ROOT_FOLDER_ID": self.gdrive_root_folder_id,
+            }
+            missing = [name for name, value in credentials.items() if not value or not value.strip()]
+            if missing:
+                raise ValueError(f"{', '.join(missing)} required when FILE_STORE=drive")
         return self
 
 
