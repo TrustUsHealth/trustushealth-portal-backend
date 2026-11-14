@@ -90,12 +90,18 @@ async def store_report(
 ) -> StoredReport:
     coll = month_collection(month_key)
     await ensure_indexes(db, coll)
+    sha256 = hashlib.sha256(data).hexdigest()
+    existing = await db[coll].find_one({"file.sha256": sha256}, NO_FILE_DATA)
+    if existing:
+        return StoredReport(make_ref(month_key, existing["_id"]), existing, False)
     kept = optimize_pdf(data) if content_type == "application/pdf" else data
     patient = {k: v for k, v in (parse.fields if parse else {}).items() if v not in (None, "", [])}
     patient["partner_key"] = partner_key
     doc: dict[str, Any] = {
         "partner_key": partner_key,
-        "file": store.pack(name=filename, content_type=content_type, data=kept, original=data),
+        "file": await store.pack(
+            name=filename, content_type=content_type, data=kept, original=data, month_key=month_key
+        ),
         "patient": patient,
         "parse": parse.stored()
         if parse
@@ -109,9 +115,31 @@ async def store_report(
     }
     try:
         res = await db[coll].insert_one(doc)
-    except DuplicateKeyError:
-        existing = await db[coll].find_one({"file.sha256": hashlib.sha256(data).hexdigest()}, NO_FILE_DATA)
-        return StoredReport(make_ref(month_key, existing["_id"]), existing, False)
+    except Exception as exc:
+        persisted = None
+        drive_id = doc["file"].get("drive_id")
+        keep_drive_file = False
+        if drive_id:
+            try:
+                persisted = await db[coll].find_one({"file.drive_id": drive_id}, NO_FILE_DATA)
+            except Exception:
+                log.warning("Could not confirm report insert after MongoDB returned an error")
+                keep_drive_file = True
+        if persisted and persisted["file"].get("drive_id") == drive_id:
+            keep_drive_file = True
+            persisted_id = persisted.get("_id", doc.get("_id"))
+            if persisted_id is not None:
+                return StoredReport(make_ref(month_key, persisted_id), persisted, True)
+        if not keep_drive_file:
+            try:
+                await store.cleanup(doc["file"])
+            except Exception:
+                log.warning("Could not clean up report file after MongoDB insert failure")
+        if isinstance(exc, DuplicateKeyError):
+            existing = await db[coll].find_one({"file.sha256": sha256}, NO_FILE_DATA)
+            if existing:
+                return StoredReport(make_ref(month_key, existing["_id"]), existing, False)
+        raise
     doc["file"].pop("data", None)
     doc["_id"] = res.inserted_id
     return StoredReport(make_ref(month_key, res.inserted_id), doc, True)
