@@ -119,6 +119,50 @@ email queue. When changing the Apps Script code, create a new deployment version
 For local development, use `MAIL_TRANSPORT=smtp` with Mailpit. The optional `gmail` transport still uses Gmail SMTP and
 requires `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`; it may not work on hosts that restrict outbound SMTP.
 
+### Private Google Drive report storage (optional)
+
+Report PDFs are stored in MongoDB by default. To use one personal Google Drive account instead, configure the Drive
+backend only after migrating existing report files. Drive files remain private; the application does not create public
+permissions or share links. MongoDB retains report metadata and the Drive file ID. Existing MongoDB-backed files
+continue to be readable after the backend switch.
+The existing `file.sha256` remains the original-upload dedupe hash; Drive-backed records also store
+`file.content_sha256` to verify the exact stored bytes when PDFs have been optimized.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create/select a project and enable the **Google Drive
+   API**.
+2. Configure the OAuth consent screen and set its publishing status to **In production**. A refresh token issued while
+   the app is in **Testing** mode expires after 7 days.
+3. Create an OAuth client ID with application type **Desktop app** and download its client JSON.
+4. On a trusted local machine, install the project dependencies and run
+   `python -m scripts.gdrive_auth --create-root-folder path\to\client_secret.json`. Complete consent with the intended
+   Google account and securely save the printed refresh token and `GDRIVE_ROOT_FOLDER_ID`. The helper creates the root
+   folder through the API so it is accessible using the narrow `drive.file` scope.
+5. Configure `GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`, `GDRIVE_REFRESH_TOKEN`, and `GDRIVE_ROOT_FOLDER_ID` in the
+   deployment environment. Never commit or log these values. `FILE_STORE` remains `mongo` until migration is verified.
+
+#### Rollout
+
+Run commands from the backend directory with a Python environment containing the project dependencies. Use the same
+MongoDB settings and Drive credentials for both migration invocations:
+
+1. Set the four `GDRIVE_*` variables in the local environment used for migration. Leave `FILE_STORE=mongo` so the
+   running service continues to write to MongoDB.
+2. Review the eligible documents with
+   `python -m scripts.migrate_files_to_drive --dry-run` (optionally add `--collection reports_YYYY_MM` or `--limit N`).
+3. Pause report uploads during the final migration/switch, or repeat the dry-run immediately before switching.
+   Migrate with `python -m scripts.migrate_files_to_drive`; repeat until a final dry-run selects zero documents. The
+   script verifies each uploaded file's size and SHA-256 before atomically removing its Mongo bytes. Failures are
+   reported at the end and can be retried safely.
+4. After the migration reports no failures and is complete, set `FILE_STORE=drive` in the service environment and
+   restart/deploy the backend. New report uploads then go to Drive; reads continue to follow each document's metadata.
+
+#### Rollback
+
+Set `FILE_STORE=mongo` and restart the service. Newly uploaded reports will return to MongoDB; already migrated
+documents continue to be read from Drive, so keep the Google credentials and Drive files available. To fully return
+those documents to MongoDB, run a separately verified reverse migration before removing Drive credentials or files.
+Do not delete the Drive root folder or its contents as a rollback step.
+
 ### Run the API against those services (Windows PowerShell)
 
 ```powershell
