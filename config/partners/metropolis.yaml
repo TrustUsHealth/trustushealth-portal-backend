@@ -1,6 +1,6 @@
 key: metropolis
 name: Metropolis Healthcare
-enabled_in: [patient_registry, reports]      # add bill_generator when bills are needed
+enabled_in: [patient_registry, bill_generator, reports]
 
 detect:
   sender_domains: [example-metropolis.com]
@@ -23,3 +23,9 @@ extra_labels: ["VID No.", "Address", "Pin code"]     # read for audit only, not 
 tests:
   source: investigation_column   # bold names under "Investigation"; the grey line in brackets
                                  # (specimen, method) is ignored
+
+bill:
+  mode: edit_pdf                          # the lab's own PDF; only the cells below change
+  bill_no_source: lab                     # its bill number replaces bill_no (section 6.3)
+  editable_cells: [test_amount, gross_total, grand_total, received_amount, payment_amount, amount_received_in_words]
+  words_template: "(INR) {words} ONLY."

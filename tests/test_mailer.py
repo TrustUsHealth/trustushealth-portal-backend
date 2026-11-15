@@ -106,6 +106,25 @@ def test_text_email_gets_branded_html_and_escapes_text():
     assert "First line<br>" in html_content
 
 
+def test_header_highlights_are_escaped_and_subject_is_not_repeated_in_body():
+    mailer = Mailer(make_settings())
+    message = mailer._build_message(
+        OutboundEmail(
+            to="recipient@example.com",
+            subject="Your report",
+            text="Please find your documents attached.",
+            header_highlights=(("Patient", "A < B"), ("Test date", "14 October 2026"), ("Laboratory", "Spectrum")),
+        )
+    )
+
+    html_part = message.get_body(preferencelist=("html",))
+    html_content = html_part.get_body(preferencelist=("html",)).get_content()
+    assert "<h1" not in html_content
+    assert html_content.count("Your report") == 1  # retained only as the document title, not repeated in the body
+    assert "A &lt; B" in html_content
+    assert html_content.index("Patient") < html_content.index("Test date") < html_content.index("Laboratory")
+
+
 def test_email_with_html_keeps_plain_text_alternative_and_embeds_logo():
     mailer = Mailer(make_settings())
     message = mailer._build_message(

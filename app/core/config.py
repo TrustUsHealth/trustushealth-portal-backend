@@ -181,7 +181,7 @@ class ModulesCfg(_Strict):
     modules: list[ModuleDef]
 
 
-FieldType = Literal["text", "number", "enum", "date", "datetime", "text_list", "money"]
+FieldType = Literal["text", "number", "enum", "date", "datetime", "text_list", "money", "money_list"]
 
 
 class FieldDef(_Strict):
@@ -282,9 +282,43 @@ class ExtractTests(_Strict):
     repeat_pages: Literal["merge"] | None = None
 
 
-class BillLayout(_Strict):
-    header_lines: list[str]
-    sections: list[Literal["bill_no", "patient_details", "tests_table", "amount_summary"]]
+BillCell = Literal[
+    "test_amount",
+    "gross_total",
+    "grand_total",
+    "received_amount",
+    "payment_amount",
+    "amount_received_in_words",
+]
+
+
+class BillCfg(_Strict):
+    """`bill:` block of a partner file (PRD 12.2): `generate` (ReportLab layouts) or `edit_pdf` (the lab's own PDF)."""
+
+    mode: Literal["generate", "edit_pdf"]
+    variants: list[Literal["plain", "with_client"]] = []
+    signature_asset: str | None = None
+    amount_words: Literal["indian_title_case_only"] | None = None
+    discount_block: Literal["when_discount_above_zero"] | None = None
+    bill_no_source: Literal["internal", "lab"] = "internal"
+    editable_cells: list[BillCell] = []
+    words_template: str | None = None
+
+    @model_validator(mode="after")
+    def _by_mode(self) -> BillCfg:
+        if self.mode == "generate":
+            if not self.variants:
+                raise ValueError("a generated bill needs 'variants' (plain, with_client)")
+            if not self.signature_asset:
+                raise ValueError("a generated bill needs 'signature_asset'")
+            if self.amount_words is None:
+                raise ValueError("a generated bill needs 'amount_words'")
+        else:
+            if not self.editable_cells:
+                raise ValueError("an edited lab bill needs 'editable_cells'")
+            if not self.words_template or "{words}" not in self.words_template:
+                raise ValueError("'words_template' must contain {words}")
+        return self
 
 
 class PartnerCfg(_Strict):
@@ -297,7 +331,7 @@ class PartnerCfg(_Strict):
     header: dict[str, HeaderField] = {}
     extra_labels: list[str] = []
     tests: ExtractTests | None = None
-    bill: BillLayout | None = None
+    bill: BillCfg | None = None
     # Pins this lab's colour in Business Insights charts and the PDF.
     chart_color: str | None = Field(default=None, pattern=r"^#[0-9A-Fa-f]{6}$")
 
@@ -510,7 +544,7 @@ def _cross_check(cfg: PortalConfig) -> list[str]:
             elif not m.lab_aware:
                 p.append(f"{f}: module '{mk}' is not lab_aware in modules.yaml")
         if "bill_generator" in partner.enabled_in and not partner.bill:
-            p.append(f"{f}: enabled in bill_generator but has no 'bill:' layout section")
+            p.append(f"{f}: enabled in bill_generator but has no 'bill:' section")
         for hk, hf in partner.header.items():
             if hk not in fset and hk not in COMPOSITE_HEADER_KEYS:
                 p.append(f"{f}: header -> {hk}: not a standard field (see fields.yaml)")

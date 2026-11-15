@@ -2,39 +2,190 @@
   "info": {
     "_postman_id": "d56f32bc-9dc8-41df-8548-9d3e963e7062",
     "name": "TrustUs Health Portal Backend",
-    "description": "Backend API organized by feature. Set baseUrl and adminEmail, request an OTP, then verify it; the access token is saved automatically. Refresh tokens use Postman's cookie jar. Patient Registry folders are numbered in the order they should be run (see each folder description). Business Insights (INS1, INS2) is Admin only.",
+    "description": "Backend API organized by feature. Set baseUrl and adminEmail, request an OTP, then verify it; the access token is saved automatically. Refresh tokens use Postman's cookie jar. Patient Registry folders are numbered in the order they should be run. Business Insights (INS1, INS2) is Admin only. BG covers Spectrum bill generation and Metropolis bill editing.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
     ]
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8000", "type": "string" },
-    { "key": "accessToken", "value": "", "type": "string" },
-    { "key": "adminEmail", "value": "admin@example.com", "type": "string" },
-    { "key": "otpCode", "value": "", "type": "string" },
-    { "key": "module", "value": "patient_registry", "type": "string" },
-    { "key": "staffModuleKey", "value": "patient_registry", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" },
-    { "key": "grantId", "value": "", "type": "string" },
-    { "key": "staffEmail", "value": "staff@example.com", "type": "string" },
-    { "key": "partnerKey", "value": "spectrum", "type": "string" },
-    { "key": "regDate", "value": "2026-10-14", "type": "string" },
-    { "key": "year", "value": "2026", "type": "string" },
-    { "key": "entryId", "value": "", "type": "string" },
-    { "key": "targetEntryId", "value": "", "type": "string" },
-    { "key": "entryVersion", "value": "", "type": "string" },
-    { "key": "billNo", "value": "", "type": "string" },
-    { "key": "reportId", "value": "", "type": "string" },
-    { "key": "customerId", "value": "", "type": "string" },
-    { "key": "jobSecret", "value": "", "type": "string" },
-    { "key": "insPeriod", "value": "this_month", "type": "string" },
-    { "key": "insCompare", "value": "previous", "type": "string" },
-    { "key": "insFrom", "value": "2026-10-01", "type": "string" },
-    { "key": "insTo", "value": "2026-10-31", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "otpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "module",
+      "value": "patient_registry",
+      "type": "string"
+    },
+    {
+      "key": "staffModuleKey",
+      "value": "patient_registry",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "grantId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffEmail",
+      "value": "staff@example.com",
+      "type": "string"
+    },
+    {
+      "key": "partnerKey",
+      "value": "spectrum",
+      "type": "string"
+    },
+    {
+      "key": "regDate",
+      "value": "2026-10-14",
+      "type": "string"
+    },
+    {
+      "key": "year",
+      "value": "2026",
+      "type": "string"
+    },
+    {
+      "key": "entryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "targetEntryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "entryVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billNo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reportId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jobSecret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "insPeriod",
+      "value": "this_month",
+      "type": "string"
+    },
+    {
+      "key": "insCompare",
+      "value": "previous",
+      "type": "string"
+    },
+    {
+      "key": "insFrom",
+      "value": "2026-10-01",
+      "type": "string"
+    },
+    {
+      "key": "insTo",
+      "value": "2026-10-31",
+      "type": "string"
+    },
+    {
+      "key": "billEntryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billEntryVersion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billDiscountAmount",
+      "value": "0.00",
+      "type": "string"
+    },
+    {
+      "key": "billNoOriginal",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "labBillNo",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "billDelivery",
+      "value": "preview",
+      "type": "string"
+    },
+    {
+      "key": "billAmounts",
+      "value": "[\"450.00\"]",
+      "type": "string"
+    },
+    {
+      "key": "billLabCost",
+      "value": "300.00",
+      "type": "string"
+    },
+    {
+      "key": "billUpdateEntryTotal",
+      "value": "false",
+      "type": "string"
+    },
+    {
+      "key": "billForceNew",
+      "value": "false",
+      "type": "string"
+    },
+    {
+      "key": "metropolisEntryId",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -50,7 +201,9 @@
             "description": "Returns {\"status\":\"ok\"}; intentionally avoids a database call."
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         }
       ]
     },
@@ -62,17 +215,28 @@
           "name": "Request OTP",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/auth/otp/request",
             "description": "202 is returned whether or not the account exists. Check Mailpit or the Gmail inbox for the actual message."
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         },
         {
           "name": "Verify OTP",
@@ -92,21 +256,36 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"code\": \"{{otpCode}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/auth/otp/verify",
             "description": "Set otpCode to the six-digit code received by email. A refresh cookie is also set."
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         },
         {
           "name": "Current user",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/auth/me" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          },
           "response": []
         },
         {
@@ -148,14 +327,24 @@
       "item": [
         {
           "name": "My dashboard modules",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/me/modules"
+          },
           "response": []
         },
         {
           "name": "Public app configuration",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/config/app" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/config/app"
+          },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         },
         {
           "name": "Partners enabled for module (lab selector)",
@@ -177,11 +366,20 @@
           "name": "Request module access",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"module\": \"{{staffModuleKey}}\",\n  \"submodule\": null\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/requests",
             "description": "Requires a non-Admin user. Use submodule \"spectrum\" to request a single lab."
@@ -207,7 +405,11 @@
       "item": [
         {
           "name": "List users",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/access/users" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/users"
+          },
           "response": []
         },
         {
@@ -225,11 +427,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{staffEmail}}\",\n  \"name\": \"Postman Test User\",\n  \"role\": \"staff\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/users",
             "description": "Creates an account allowed to request OTP login. Invitations do not send a separate email."
@@ -240,11 +451,20 @@
           "name": "Update user",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Updated Postman User\",\n  \"active\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/users/{{userId}}"
           },
@@ -252,18 +472,31 @@
         },
         {
           "name": "List dashboard modules",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/access/modules" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/modules"
+          },
           "response": []
         },
         {
           "name": "Set module visibility",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"visible_to_staff\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/modules/{{staffModuleKey}}/visibility",
             "description": "Admin-only Access Portal visibility cannot be changed."
@@ -278,17 +511,29 @@
       "item": [
         {
           "name": "List pending requests",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/access/requests" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests"
+          },
           "response": []
         },
         {
           "name": "Approve request",
-          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/approve" },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/approve"
+          },
           "response": []
         },
         {
           "name": "Deny request",
-          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/deny" },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/requests/{{grantId}}/deny"
+          },
           "response": []
         },
         {
@@ -306,11 +551,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"module\": \"{{staffModuleKey}}\",\n  \"submodule\": null\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/grants",
             "description": "Set submodule to \"spectrum\" to grant one lab only."
@@ -319,12 +573,20 @@
         },
         {
           "name": "Revoke grant",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/access/grants/{{grantId}}" },
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/grants/{{grantId}}"
+          },
           "response": []
         },
         {
           "name": "Access matrix",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/access/matrix" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/access/matrix"
+          },
           "response": []
         }
       ]
@@ -350,7 +612,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/me/modules"
+          },
           "response": []
         },
         {
@@ -370,7 +636,12 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/fields", "description": "Admin sees margin; Staff must not (admin_only field)." },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/fields",
+            "description": "Admin sees margin; Staff must not (admin_only field)."
+          },
           "response": []
         }
       ]
@@ -413,8 +684,16 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "partner_key", "value": "spectrum", "type": "text" },
-                { "key": "file", "type": "file", "src": [] }
+                {
+                  "key": "partner_key",
+                  "value": "spectrum",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/parse",
@@ -455,8 +734,16 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "partner_key", "value": "metropolis", "type": "text" },
-                { "key": "file", "type": "file", "src": [] }
+                {
+                  "key": "partner_key",
+                  "value": "metropolis",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/parse",
@@ -469,7 +756,12 @@
           "event": [
             {
               "listen": "test",
-              "script": { "type": "text/javascript", "exec": ["pm.test('400 manual lab', function () { pm.response.to.have.status(400); });"] }
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 manual lab', function () { pm.response.to.have.status(400); });"
+                ]
+              }
             }
           ],
           "request": {
@@ -478,8 +770,16 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "partner_key", "value": "home_lab", "type": "text" },
-                { "key": "file", "type": "file", "src": [] }
+                {
+                  "key": "partner_key",
+                  "value": "home_lab",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/parse"
@@ -491,7 +791,12 @@
           "event": [
             {
               "listen": "test",
-              "script": { "type": "text/javascript", "exec": ["pm.test('415 or 400', function () { pm.expect(pm.response.code).to.be.oneOf([400, 415, 422]); });"] }
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('415 or 400', function () { pm.expect(pm.response.code).to.be.oneOf([400, 415, 422]); });"
+                ]
+              }
             }
           ],
           "request": {
@@ -500,8 +805,16 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "partner_key", "value": "spectrum", "type": "text" },
-                { "key": "file", "type": "file", "src": [] }
+                {
+                  "key": "partner_key",
+                  "value": "spectrum",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
               ]
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/parse",
@@ -511,12 +824,21 @@
         },
         {
           "name": "Preview stored report (inline PDF)",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/reports/{{reportId}}/file", "description": "Use Send and Download in Postman to view the PDF." },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/reports/{{reportId}}/file",
+            "description": "Use Send and Download in Postman to view the PDF."
+          },
           "response": []
         },
         {
           "name": "Download stored report",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/reports/{{reportId}}/file?download=true" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/reports/{{reportId}}/file?download=true"
+          },
           "response": []
         }
       ]
@@ -551,11 +873,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem MS\",\n  \"registration_date\": \"2026-10-14\",\n  \"age\": 45,\n  \"age_unit\": \"Y\",\n  \"gender\": \"Male\",\n  \"lab_pid\": \"0200118333\",\n  \"referred_by\": \"Dr. Saumil Shah\",\n  \"collection_time\": \"2026-10-14T11:26:00\",\n  \"reporting_time\": \"2026-10-14T15:07:00\",\n  \"tests\": [\"TSH (Thyroid Stimulating Hormone)\", \"Sugar Fasting Blood\"],\n  \"report_id\": \"{{reportId}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries",
             "description": "Run 'Parse Spectrum report' first so reportId is set (or remove report_id)."
@@ -583,11 +914,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"home_lab\",\n  \"patient_name\": \"MRS. ASHA PATEL\",\n  \"registration_date\": \"{{regDate}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries",
             "description": "Minimum to save: name, registration date, lab."
@@ -616,11 +956,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem MS\",\n  \"registration_date\": \"2026-10-14\",\n  \"lab_pid\": \"0200118333\",\n  \"phone\": \"98200 12345\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -649,11 +998,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem MS\",\n  \"registration_date\": \"2026-10-14\",\n  \"lab_pid\": \"0200118333\",\n  \"referred_by\": \"DR.JATIN KOTHARI\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -677,11 +1035,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem MS\",\n  \"registration_date\": \"2026-10-14\",\n  \"lab_pid\": \"0200118333\",\n  \"referred_by\": \"DR.JATIN KOTHARI\",\n  \"target_entry_id\": \"{{targetEntryId}}\",\n  \"resolutions\": { \"referred_by\": \"existing\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries",
             "description": "Change \"existing\" to \"incoming\" to take the new doctor instead."
@@ -708,11 +1075,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem Ms.\",\n  \"registration_date\": \"2026-10-14\",\n  \"lab_pid\": \"ZZ9999\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -736,11 +1112,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem Ms.\",\n  \"registration_date\": \"2026-10-14\",\n  \"lab_pid\": \"ZZ9999\",\n  \"force_new\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries",
             "description": "Audit log records entry.create_distinct."
@@ -762,11 +1147,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Kalphem MS\",\n  \"registration_date\": \"2026-10-20\",\n  \"lab_pid\": \"0200118333\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -775,15 +1169,32 @@
         {
           "name": "Validation: missing name -> 422",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"registration_date\": \"2026-10-14\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -792,15 +1203,32 @@
         {
           "name": "Validation: bill_no / net_amount cannot be supplied -> 422",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422 (extra fields forbidden)', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 (extra fields forbidden)', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Test Person\",\n  \"registration_date\": \"2026-10-14\",\n  \"bill_no\": \"000999\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -829,11 +1257,20 @@
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"gross_amount\": 500,\n  \"discount_amount\": 50,\n  \"lab_cost\": 300,\n  \"expected_version\": {{entryVersion}}\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}",
             "description": "margin is visible to Admin only (Staff sees null). Complete entries get a row in the Excel register (see PR5)."
@@ -843,15 +1280,32 @@
         {
           "name": "Edit with stale expected_version -> 409",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('409 stale version', function () { pm.response.to.have.status(409); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 stale version', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"kalphem@example.com\",\n  \"expected_version\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}"
           },
@@ -860,15 +1314,32 @@
         {
           "name": "Edit: discount above gross -> 422",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"discount_amount\": 9999\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}"
           },
@@ -878,11 +1349,20 @@
           "name": "Edit: move registration date to another month (Excel row moves)",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"registration_date\": \"2026-11-02\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}",
             "description": "Afterwards download the workbook: the row must be on the Nov sheet and gone from Oct. Change it back to 2026-10-14 to restore."
@@ -907,27 +1387,47 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}"
+          },
           "response": []
         },
         {
           "name": "List entries (latest first)",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries?page=1&page_size=25" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries?page=1&page_size=25"
+          },
           "response": []
         },
         {
           "name": "Search by name",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries?q=kalphem" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries?q=kalphem"
+          },
           "response": []
         },
         {
           "name": "Search by bill no",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries?bill_no={{billNo}}" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries?bill_no={{billNo}}"
+          },
           "response": []
         },
         {
           "name": "Search by lab PID",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries?lab_pid=0200118333" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries?lab_pid=0200118333"
+          },
           "response": []
         },
         {
@@ -937,14 +1437,36 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/v1/patient_registry/entries?partner_key=spectrum&status=complete&date_from=2026-10-01&date_to=2026-11-30&referred_by=saumil",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "patient_registry", "entries"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "patient_registry",
+                "entries"
+              ],
               "query": [
-                { "key": "partner_key", "value": "spectrum" },
-                { "key": "status", "value": "complete" },
-                { "key": "date_from", "value": "2026-10-01" },
-                { "key": "date_to", "value": "2026-11-30" },
-                { "key": "referred_by", "value": "saumil" }
+                {
+                  "key": "partner_key",
+                  "value": "spectrum"
+                },
+                {
+                  "key": "status",
+                  "value": "complete"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-10-01"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2026-11-30"
+                },
+                {
+                  "key": "referred_by",
+                  "value": "saumil"
+                }
               ]
             }
           },
@@ -952,7 +1474,12 @@
         },
         {
           "name": "Delete entry (Admin only; bill_no stays retired)",
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}", "description": "Run last. Expect 204. Creating a new entry afterwards must NOT reuse the deleted bill_no. Staff gets 403." },
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}",
+            "description": "Run last. Expect 204. Creating a new entry afterwards must NOT reuse the deleted bill_no. Staff gets 403."
+          },
           "response": []
         }
       ]
@@ -963,12 +1490,21 @@
       "item": [
         {
           "name": "Search customers",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/customers?q=kalphem" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/customers?q=kalphem"
+          },
           "response": []
         },
         {
           "name": "Customer detail with entries",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/customers/{{customerId}}", "description": "The Oct 14 and Oct 20 visits of Kalphem MS must both list under one customer." },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/customers/{{customerId}}",
+            "description": "The Oct 14 and Oct 20 visits of Kalphem MS must both list under one customer."
+          },
           "response": []
         }
       ]
@@ -979,7 +1515,11 @@
       "item": [
         {
           "name": "List workbooks",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/excel_register" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/excel_register"
+          },
           "response": []
         },
         {
@@ -999,12 +1539,21 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/download?year={{year}}" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/download?year={{year}}"
+          },
           "response": []
         },
         {
           "name": "Send now (Admin) - needs Gmail or Mailpit",
-          "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/send?year={{year}}", "description": "Locally the mail lands in Mailpit (http://localhost:8025) with the .xlsx attached. Recipients come from ADMIN_REPORT_EMAILS, else config/excel.yaml." },
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/send?year={{year}}",
+            "description": "Locally the mail lands in Mailpit (http://localhost:8025) with the .xlsx attached. Recipients come from ADMIN_REPORT_EMAILS, else config/excel.yaml."
+          },
           "response": []
         },
         {
@@ -1025,25 +1574,47 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Job-Secret", "value": "{{jobSecret}}" }],
+            "header": [
+              {
+                "key": "X-Job-Secret",
+                "value": "{{jobSecret}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/patient_registry/jobs/excel_monthly",
             "description": "Set jobSecret to JOB_SECRET from .env (24+ chars). First call sends last month's workbook; calling it again must return already_sent and send nothing (idempotent)."
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         },
         {
           "name": "Monthly job with wrong secret -> 401",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Job-Secret", "value": "wrong-secret-value-000000000" }],
+            "header": [
+              {
+                "key": "X-Job-Secret",
+                "value": "wrong-secret-value-000000000"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/patient_registry/jobs/excel_monthly"
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         }
       ]
     },
@@ -1053,21 +1624,42 @@
       "item": [
         {
           "name": "Staff: list entries (granted lab only)",
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries"
+          },
           "response": []
         },
         {
           "name": "Staff: create Metropolis entry -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 lab not granted', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 lab not granted', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"partner_key\": \"metropolis\",\n  \"patient_name\": \"Ramesh Gada\",\n  \"registration_date\": \"2026-11-02\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/patient_registry/entries"
           },
@@ -1076,27 +1668,65 @@
         {
           "name": "Staff: delete entry -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 admin only', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}" },
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries/{{entryId}}"
+          },
           "response": []
         },
         {
           "name": "Staff: Excel download without excel_register grant -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/download" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/excel_register/download"
+          },
           "response": []
         },
         {
           "name": "No token -> 401",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/patient_registry/entries" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/patient_registry/entries"
+          },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         }
       ]
     },
@@ -1122,7 +1752,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/me/modules"
+          },
           "response": []
         },
         {
@@ -1146,7 +1780,12 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/filters", "description": "Presets are already resolved to dates in IST, with the matching Previous-period compare dates. earliest_data_date is the first registration date on record." },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/filters",
+            "description": "Presets are already resolved to dates in IST, with the matching Previous-period compare dates. earliest_data_date is the first registration date on record."
+          },
           "response": []
         },
         {
@@ -1250,7 +1889,12 @@
           "event": [
             {
               "listen": "test",
-              "script": { "type": "text/javascript", "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"] }
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
             }
           ],
           "request": {
@@ -1404,7 +2048,11 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?labs=nolab" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?labs=nolab"
+          },
           "response": []
         },
         {
@@ -1423,15 +2071,31 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?from=2026-11-05&to=2026-11-01" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?from=2026-11-05&to=2026-11-01"
+          },
           "response": []
         },
         {
           "name": "Bad filter: unknown period -> 422",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview?period=nonsense" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview?period=nonsense"
+          },
           "response": []
         },
         {
@@ -1486,9 +2150,21 @@
         {
           "name": "PDF: unknown section -> 422",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/report.pdf?sections=bogus" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/report.pdf?sections=bogus"
+          },
           "response": []
         },
         {
@@ -1509,25 +2185,47 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Job-Secret", "value": "{{jobSecret}}" }],
+            "header": [
+              {
+                "key": "X-Job-Secret",
+                "value": "{{jobSecret}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/insights/jobs/report_monthly",
             "description": "Scheduler endpoint; run it after the Excel monthly job on the 1st. Returns 'disabled' unless report.monthly_email is true in config/insights.yaml. When enabled, the first call emails last month's PDF to the Excel recipients (Mailpit locally) and a second call returns 'already_sent'. Set jobSecret to JOB_SECRET from .env."
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         },
         {
           "name": "Monthly report job with wrong secret -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Job-Secret", "value": "wrong-secret-value-000000000" }],
+            "header": [
+              {
+                "key": "X-Job-Secret",
+                "value": "wrong-secret-value-000000000"
+              }
+            ],
             "url": "{{baseUrl}}/api/v1/insights/jobs/report_monthly"
           },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
         }
       ]
     },
@@ -1552,45 +2250,102 @@
               }
             }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/me/modules" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/me/modules"
+          },
           "response": []
         },
         {
           "name": "Staff: overview -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 admin only', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview"
+          },
           "response": []
         },
         {
           "name": "Staff: filters -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 admin only', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/filters" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/filters"
+          },
           "response": []
         },
         {
           "name": "Staff: PDF report -> 403",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('403 admin only', function () { pm.response.to.have.status(403); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 admin only', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/report.pdf" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/report.pdf"
+          },
           "response": []
         },
         {
           "name": "Staff: grant Business Insights is refused (run as Admin)",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('422 not grantable', function () { pm.response.to.have.status(422); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 not grantable', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"module\": \"insights\",\n  \"submodule\": null\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/api/v1/access/grants",
             "description": "Run with the Admin token (userId is saved by 'Invite user'). Admin-only modules cannot be granted to anyone else."
@@ -1600,11 +2355,321 @@
         {
           "name": "No token -> 401",
           "event": [
-            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"] } }
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
           ],
-          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/insights/overview" },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/insights/overview"
+          },
           "response": [],
-          "auth": { "type": "noauth" }
+          "auth": {
+            "type": "noauth"
+          }
+        }
+      ]
+    },
+    {
+      "name": "BG - Bill Generator (Spectrum and Metropolis)",
+      "description": "Bill Generator API workflow. All endpoints require a signed-in user with bill_generator access and access to the selected lab. Start with List available bill-generation labs. Spectrum: create an entry (or parse a report first), get prefill, save bill data, render. Metropolis: inspect the original PDF, then render it with one amount per row. Use the same Metropolis PDF for inspect and render. Preview/download responses are PDFs; email delivery returns {sent:true} and sends only to the signed-in user's email. Metropolis replaces the internal bill number with the lab's number while retaining bill_no_original; conflicts return 409.",
+      "item": [
+        {
+          "name": "List available bill-generation labs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/labs",
+            "description": "Returns only laboratories this user can access in Bill Generator. Admin sees all configured bill-generation labs."
+          },
+          "response": []
+        },
+        {
+          "name": "Parse Spectrum report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/spectrum/parse",
+            "description": "Select a Spectrum report PDF (or another configured allowed upload type). This reads the report in memory; it does not save an entry. The response contains parsed fields and duplicate hints.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.test('Spectrum parse response shape', function () {",
+                  "    pm.expect(j.partner_key).to.eql('spectrum');",
+                  "    pm.expect(j.fields).to.be.an('object');",
+                  "    pm.expect(j).to.have.property('duplicate_kind');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Spectrum bill entry (manual example)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/entries",
+            "description": "Creates or merges an entry for a generated Spectrum bill. Change the sample identity/date before rerunning to avoid an unintended duplicate. Exact matches can return 200; new entries return 201; duplicate decisions return 409.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partner_key\": \"spectrum\",\n  \"patient_name\": \"Postman Bill Test\",\n  \"registration_date\": \"2026-11-15\",\n  \"age\": 35,\n  \"age_unit\": \"Y\",\n  \"gender\": \"Other\",\n  \"lab_pid\": \"POSTMAN-BILL-001\",\n  \"referred_by\": \"Dr. Postman\",\n  \"tests\": [\"Complete Blood Count\"],\n  \"test_amounts\": [\"450.00\"],\n  \"lab_cost\": \"300.00\",\n  \"discount_amount\": \"0.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('billEntryId', j.entry.id);",
+                  "  pm.collectionVariables.set('billEntryVersion', String(j.entry.version));",
+                  "  pm.collectionVariables.set('billNoOriginal', j.entry.bill_no_original || '');",
+                  "  pm.test('Saved Bill Generator entry', function () {",
+                  "    pm.expect(j.entry.id).to.be.a('string').and.not.empty;",
+                  "    pm.expect(j.entry.bill_no).to.be.a('string').and.not.empty;",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get bill-page prefill",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/entries/{{billEntryId}}/bill",
+            "description": "Returns the entry fields and bill data needed to prefill the bill page. Run after creating an entry or set billEntryId manually."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('billEntryVersion', String(j.version));",
+                  "  pm.test('Bill prefill belongs to selected entry', function () {",
+                  "    pm.expect(j.id).to.eql(pm.collectionVariables.get('billEntryId'));",
+                  "    pm.expect(j).to.have.property('test_amounts');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Save bill data",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/entries/{{billEntryId}}/bill-data",
+            "description": "Updates test amounts, discount, lab cost and/or client name on the same entry. expected_version is optional; supply it for optimistic concurrency protection. Money values are decimal strings.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"test_amounts\": [\"450.00\"],\n  \"discount_amount\": \"{{billDiscountAmount}}\",\n  \"lab_cost\": \"300.00\",\n  \"expected_version\": {{billEntryVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('billEntryVersion', String(j.version));",
+                  "  pm.test('Bill data saved', function () {",
+                  "    pm.expect(j.id).to.eql(pm.collectionVariables.get('billEntryId'));",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Render Spectrum bill",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/spectrum/render",
+            "description": "Returns a PDF for preview/download, or {sent:true} when delivery=email. Email is sent only to the currently signed-in user. Set delivery to preview, download or email. Optional bill_discount_amount overrides the saved discount for this bill only; use 0 to omit the discount block, or null to use the saved discount. The override is never stored.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_id\": \"{{billEntryId}}\",\n  \"include_client\": false,\n  \"delivery\": \"{{billDelivery}}\",\n  \"bill_discount_amount\": \"{{billDiscountAmount}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('billDelivery') === 'email' && pm.response.code === 200) {",
+                  "  pm.test('Bill email accepted', function () { pm.expect(pm.response.json().sent).to.eql(true); });",
+                  "} else if (pm.response.code === 200) {",
+                  "  pm.test('Spectrum bill PDF returned', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inspect Metropolis bill",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/metropolis/inspect",
+            "description": "Select the original Metropolis bill PDF. Read-only: extracts the lab bill number, patient, rows and totals, and checks matching entries and whether the lab bill number is already owned. Nothing is saved.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  pm.collectionVariables.set('labBillNo', j.lab_bill_no);",
+                  "  pm.collectionVariables.set('metropolisEntryId', j.entry_id || '');",
+                  "  pm.test('Metropolis inspection response', function () {",
+                  "    pm.expect(j.lab_bill_no).to.be.a('string').and.not.empty;",
+                  "    pm.expect(j.rows).to.be.an('array').and.not.empty;",
+                  "    pm.expect(j.match.kind).to.be.oneOf(['exact', 'possible', 'none']);",
+                  "    pm.expect(j.bill_no_taken).to.be.a('boolean');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Render Metropolis bill",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/bill_generator/metropolis/render",
+            "description": "Select the same original Metropolis PDF used for inspection. Form fields: amounts is a JSON array with one decimal string per test row; lab_cost is optional; delivery is preview/download/email. force_new=true explicitly creates a distinct entry when a possible patient match exists. The endpoint verifies the edited PDF before saving test amounts and replacing bill_no with the lab number; existing entry financial fields are unchanged. A lab bill number owned by another entry returns 409 bill_no_taken; repeated processing of the same bill is idempotent.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "amounts",
+                  "value": "{{billAmounts}}",
+                  "type": "text"
+                },
+                {
+                  "key": "delivery",
+                  "value": "{{billDelivery}}",
+                  "type": "text"
+                },
+                {
+                  "key": "entry_id",
+                  "value": "{{metropolisEntryId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "force_new",
+                  "value": "{{billForceNew}}",
+                  "type": "text"
+                },
+                {
+                  "key": "lab_cost",
+                  "value": "{{billLabCost}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200 && pm.collectionVariables.get('billDelivery') === 'email') {",
+                  "  pm.test('Metropolis bill email accepted', function () { pm.expect(pm.response.json().sent).to.eql(true); });",
+                  "} else if (pm.response.code === 200) {",
+                  "  pm.test('Metropolis bill PDF returned', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

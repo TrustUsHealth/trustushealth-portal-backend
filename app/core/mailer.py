@@ -37,6 +37,7 @@ class OutboundEmail:
     text: str | None = None
     # Optional trusted HTML body fragment; plain text is escaped and rendered when omitted.
     html: str | None = None
+    header_highlights: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     attachments: tuple[EmailAttachment, ...] = field(default_factory=tuple)
 
 
@@ -192,7 +193,12 @@ class Mailer:
 
         text = email.text or ""
         content_html = email.html if email.html is not None else text_to_html(text)
-        html = render_branded_email(self.brand_name, email.subject, content_html)
+        html = render_branded_email(
+            self.brand_name,
+            email.subject,
+            content_html,
+            header_highlights=email.header_highlights,
+        )
         message.set_content(text)
         message.add_alternative(html, subtype="html")
         html_part = message.get_body(preferencelist=("html",))

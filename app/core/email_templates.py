@@ -15,9 +15,30 @@ def text_to_html(text: str) -> str:
     return "\n".join(paragraphs)
 
 
-def render_branded_email(brand_name: str, subject: str, content_html: str) -> str:
+def render_branded_email(
+    brand_name: str,
+    subject: str,
+    content_html: str,
+    header_highlights: tuple[tuple[str, str], ...] = (),
+) -> str:
     brand = escape(brand_name)
     title = escape(subject)
+    highlights_html = ""
+    if header_highlights:
+        rows = "\n".join(
+            f"""\
+            <tr>
+              <td style="padding:8px 14px;color:#667085;font-size:12px;white-space:nowrap">{escape(label)}</td>
+              <td style="padding:8px 14px;color:#182230;font-size:15px;font-weight:700">{escape(value)}</td>
+            </tr>"""
+            for label, value in header_highlights
+        )
+        highlights_html = f"""\
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"
+                       style="margin:0 0 24px;background:#fff8f8;border:1px solid #ffd4d6;border-radius:8px">
+                  {rows}
+                </table>
+"""
     return f"""\
 <!doctype html>
 <html lang="en">
@@ -28,7 +49,6 @@ def render_branded_email(brand_name: str, subject: str, content_html: str) -> st
     <title>{title}</title>
   </head>
   <body style="margin:0;padding:24px 12px;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0">{title}</div>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr>
         <td align="center">
@@ -43,7 +63,7 @@ def render_branded_email(brand_name: str, subject: str, content_html: str) -> st
             <tr>
               <td style="padding:28px 32px 32px">
                 <div style="width:44px;height:4px;background:{BRAND_RED};border-radius:4px;margin:0 0 18px"></div>
-                <h1 style="margin:0 0 20px;color:#182230;font-size:22px;line-height:1.3">{title}</h1>
+                {highlights_html}
                 {content_html}
               </td>
             </tr>

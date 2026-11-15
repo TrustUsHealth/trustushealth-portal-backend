@@ -1,8 +1,11 @@
-# Plain text only, no logos. Placeholders: {patient_name} {brand} {bill_no}
+# Plain text only, no logos. Placeholders: {patient_name} {test_date} {lab_name} {brand} {bill_no}
 email:
   subject: "Your report from {brand}"
   body: |
     Dear {patient_name},
+
+    Test date: {test_date}
+    Laboratory: {lab_name}
 
     Please find your documents attached.
 

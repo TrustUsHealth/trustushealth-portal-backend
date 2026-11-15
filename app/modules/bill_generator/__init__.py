@@ -1,0 +1,1 @@
+"""Bill Generator module (`/api/v1/bill_generator`)."""
