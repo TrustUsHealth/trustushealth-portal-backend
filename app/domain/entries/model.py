@@ -12,8 +12,8 @@ from app.core.config import PortalConfig
 from app.domain import money
 from app.domain.parsing import standardize as std
 
-# The only user-editable fields of an entry (section 8). bill_no, bill_no_original, net_amount, margin are never
-# client-supplied; gross_amount is the sum of test_amounts whenever those exist.
+# The only user-editable fields of an entry (section 8). bill_no, bill_no_original, net_amount and margin are never
+# client-supplied. Existing gross_amount remains authoritative when bill test_amounts are edited.
 EDITABLE = [
     "partner_key",
     "patient_name",
@@ -170,7 +170,7 @@ def clean_fields(raw: dict[str, Any], cfg: PortalConfig, *, defaults: bool) -> d
                 out[key] = _clean_one(key, raw[key], tz)
             except ValueError as exc:
                 raise EntryError(422, f"{labels.get(key, key)}: {exc}") from None
-    if out.get("test_amounts"):  # gross_amount is always the sum of the per-test amounts
+    if out.get("test_amounts"):  # initialize the incoming gross from its per-test amounts
         out["gross_amount"] = money.total(out["test_amounts"])
     if defaults:
         for f in cfg.fields:
@@ -184,11 +184,13 @@ def derive(doc: dict[str, Any]) -> dict[str, Any]:
     """Values computed from the entry. None means 'remove this field'."""
     d: dict[str, Any] = {"name_norm": std.normalize_name(doc.get("patient_name") or "")}
     amounts = doc.get("test_amounts")
-    gross = money.total(amounts) if amounts else money.opt(doc.get("gross_amount"))
+    gross = money.opt(doc.get("gross_amount"))
+    if gross is None and amounts:
+        gross = money.total(amounts)
     disc = money.opt(doc.get("discount_amount")) or money.ZERO
     cost = money.opt(doc.get("lab_cost"))
     net = gross - disc if gross is not None else None
-    if amounts:
+    if gross is not None:
         d["gross_amount"] = gross
     d["net_amount"] = net
     d["margin"] = net - cost if net is not None and cost is not None else None

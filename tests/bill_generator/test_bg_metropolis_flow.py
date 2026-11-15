@@ -1,4 +1,4 @@
-"""The Metropolis flow end to end (service level): match, total check, edit, save, lab bill number."""
+"""The Metropolis flow end to end (service level): match, edit, save, lab bill number."""
 
 from decimal import Decimal
 
@@ -25,7 +25,6 @@ async def _render(bg_db, bg_cfg, pdf, amounts, **kw):
         data=pdf,
         amounts=amounts,
         lab_cost=kw.pop("lab_cost", Decimal("300")),
-        update_total=kw.pop("update_total", False),
         entry_id=kw.pop("entry_id", None),
         force_new=kw.pop("force_new", False),
         actor_id=ACTOR,
@@ -58,16 +57,16 @@ async def test_regenerating_the_same_bill_is_idempotent(bg_db, bg_cfg, lab_pdf) 
     assert await bg_db["entries"].count_documents({}) == 1
 
 
-async def test_total_mismatch_asks_first_then_updates(bg_db, bg_cfg, lab_pdf) -> None:
+async def test_changed_bill_amounts_do_not_change_entry_financials(bg_db, bg_cfg, lab_pdf) -> None:
     await _render(bg_db, bg_cfg, lab_pdf, [Decimal("450")])
-    with pytest.raises(BillError) as exc:
-        await _render(bg_db, bg_cfg, lab_pdf, [Decimal("500")])
-    assert exc.value.status == 409 and exc.value.code == "total_mismatch"
-    assert exc.value.extra == {"entry_total": "450.00", "bill_total": "500.00"}
-    stored = await bg_db["entries"].find_one({})
-    assert stored["gross_amount"] == Decimal("450.00")  # nothing changed while asking
-    res = await _render(bg_db, bg_cfg, lab_pdf, [Decimal("500")], update_total=True)
-    assert res.entry["gross_amount"] == Decimal("500.00")
+    res = await _render(bg_db, bg_cfg, lab_pdf, [Decimal("500")], lab_cost=Decimal("999"))
+    assert "500.00" in pymupdf.open(stream=res.pdf, filetype="pdf")[0].get_text()
+    assert res.entry["test_amounts"] == [Decimal("500.00")]
+    assert res.entry["gross_amount"] == Decimal("450.00")
+    assert res.entry["discount_amount"] == Decimal("0.00")
+    assert res.entry["lab_cost"] == Decimal("300.00")
+    assert res.entry["net_amount"] == Decimal("450.00")
+    assert res.entry["margin"] == Decimal("150.00")
 
 
 async def test_lab_number_taken_by_another_entry_saves_nothing(bg_db, bg_cfg, lab_pdf) -> None:

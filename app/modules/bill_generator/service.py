@@ -211,10 +211,16 @@ def parse_amounts(raw: str) -> list[Decimal]:
 
 
 # ───────────────────────────── Spectrum ─────────────────────────────
-async def spectrum_pdf(partner: PartnerCfg, entry: dict[str, Any], *, include_client: bool) -> tuple[bytes, str]:
+async def spectrum_pdf(
+    partner: PartnerCfg,
+    entry: dict[str, Any],
+    *,
+    include_client: bool,
+    discount_amount: Decimal | None = None,
+) -> tuple[bytes, str]:
     from app.domain.bills.data import build_bill_data
 
-    data = build_bill_data(entry, include_client=include_client)
+    data = build_bill_data(entry, include_client=include_client, discount_amount=discount_amount)
     mod = bill_module(partner)
     pdf = await asyncio.to_thread(mod.render, data, include_client=include_client, bill_cfg=partner.bill)
     return pdf, data.filename
@@ -319,12 +325,11 @@ async def render_lab_bill(
     data: bytes,
     amounts: list[Decimal],
     lab_cost: Decimal | None,
-    update_total: bool,
     entry_id: str | None,
     force_new: bool,
     actor_id: str,
 ) -> LabRender:
-    """Order (PRD 10.2): read -> match -> total check -> edit in memory -> verify -> save entry and lab bill number.
+    """Order (PRD 10.2): read -> match -> edit in memory -> verify -> save test amounts and lab bill number.
     Nothing is written before the PDF is edited and verified, and a lab number used elsewhere is refused up front."""
     from app.domain.bills.data import bill_filename
 
@@ -350,15 +355,6 @@ async def render_lab_bill(
     discount = entry_discount if entry_discount > 0 else lab.discount
     if discount > gross:
         raise BillError(422, "discount_too_large", "The discount cannot be more than the total.")
-    entry_gross = money.opt(entry.get("gross_amount")) if entry else None
-    if entry_gross is not None and entry_gross != gross and not update_total:
-        raise BillError(
-            409,
-            "total_mismatch",
-            "The total of these amounts differs from the total saved on the entry.",
-            entry_total=str(entry_gross),
-            bill_total=str(gross),
-        )
     owner = await entry_service.bill_no_owner(db, lab.bill_no)
     if owner is not None and (entry is None or owner["_id"] != entry["_id"]):
         raise BillError(409, "bill_no_taken", f"Bill No {lab.bill_no} is already used by another entry.")
@@ -383,11 +379,18 @@ async def render_lab_bill(
                 module=MODULE,
                 actor_id=actor_id,
                 expected_version=entry.get("version", 1),
+                preserve_financials=True,
             )
             outcome = "merged" if changed else "unchanged"
         else:
             res = await entry_service.upsert(
-                db, cfg, {**identity, **values}, module=MODULE, actor_id=actor_id, force_new=force_new
+                db,
+                cfg,
+                {**identity, **values},
+                module=MODULE,
+                actor_id=actor_id,
+                force_new=force_new,
+                preserve_financials=True,
             )
             if res.decision is not None or res.entry is None:
                 raise BillError(409, "possible_match", "A similar patient was just saved. Please try again.")

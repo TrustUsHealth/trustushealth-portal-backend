@@ -42,6 +42,16 @@ def test_with_client_and_discount(ruju_entry) -> None:
     assert d.filename == "RUJU_PRASANNA_SHREEJI-bill_08-11-2024.pdf"
 
 
+def test_bill_only_discount_override_does_not_change_entry(ruju_entry) -> None:
+    original_discount = ruju_entry["discount_amount"]
+    discounted = build_bill_data(ruju_entry, include_client=True, discount_amount=Decimal("100"))
+    assert discounted.discount_block is not None
+    assert (discounted.discount_block.discount, discounted.discount_block.net) == ("100", "1100")
+    without_discount = build_bill_data(ruju_entry, include_client=True, discount_amount=Decimal("0"))
+    assert without_discount.discount_block is None
+    assert ruju_entry["discount_amount"] == original_discount
+
+
 def test_client_name_hidden_unless_chosen(ruju_entry) -> None:
     assert build_bill_data(ruju_entry, include_client=False).client_name is None
 

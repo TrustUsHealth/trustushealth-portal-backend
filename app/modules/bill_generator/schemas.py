@@ -20,7 +20,7 @@ class LabOut(BaseModel):
 
 
 class BillDataIn(BaseModel):
-    """What the bill page saves on the entry (PRD 10.2). Send null to clear a field."""
+    """Bill form data; edits to an existing entry preserve its financial fields."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -104,6 +104,9 @@ class SpectrumRenderIn(BaseModel):
     entry_id: str
     include_client: bool = False
     delivery: Delivery = "preview"
+    bill_discount_amount: Money | None = Field(
+        None, description="Optional bill-only discount; 0 suppresses the discount block, null uses the saved discount"
+    )
 
 
 class LabRowOut(BaseModel):

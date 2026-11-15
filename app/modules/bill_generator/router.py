@@ -170,12 +170,19 @@ async def save_bill_data(
     db=Depends(get_db),
     cfg: PortalConfig = Depends(get_config),
 ) -> EntryBillOut:
-    """Test amounts, discount, lab cost, client name: written back to the same entry (version check, Excel row)."""
+    """Save bill test amounts and client name; existing financial fields remain unchanged."""
     await _entry_or_404(db, scope, entry_id)
     patch = body.model_dump(exclude_unset=True, exclude={"expected_version"})
     try:
         before, after, changed = await entry_service.update_entry(
-            db, cfg, entry_id, patch, module=MODULE, actor_id=scope.user.id, expected_version=body.expected_version
+            db,
+            cfg,
+            entry_id,
+            patch,
+            module=MODULE,
+            actor_id=scope.user.id,
+            expected_version=body.expected_version,
+            preserve_financials=True,
         )
     except EntryError as exc:
         raise _fail(exc) from None
@@ -226,6 +233,7 @@ async def create_entry_for_bill(
             target_entry_id=body.target_entry_id,
             force_new=body.force_new,
             resolutions=dict(body.resolutions),
+            preserve_financials=True,
         )
     except EntryError as exc:
         raise _fail(exc) from None
@@ -305,13 +313,18 @@ async def render_spectrum_bill(
     db=Depends(get_db),
     cfg: PortalConfig = Depends(get_config),
 ):
-    """Render from the entry: PDF stream (preview / download) or `{sent: true}` for email. Nothing is stored."""
+    """Render from the entry with an optional bill-only discount override; no override is stored."""
     partner = _partner(cfg, scope, "spectrum", "generate")
     entry = await _entry_or_404(db, scope, body.entry_id)
     if entry["partner_key"] != partner.key:
         raise HTTPException(status_code=404, detail="Entry not found.")
     try:
-        pdf, filename = await service.spectrum_pdf(partner, entry, include_client=body.include_client)
+        pdf, filename = await service.spectrum_pdf(
+            partner,
+            entry,
+            include_client=body.include_client,
+            discount_amount=body.bill_discount_amount,
+        )
     except BillError as exc:
         raise _fail(exc) from None
     return await _deliver(request, scope, cfg, entry=entry, pdf=pdf, filename=filename, delivery=body.delivery)
@@ -342,7 +355,6 @@ async def render_metropolis_bill(
     request: Request,
     file: Annotated[UploadFile, File()],
     amounts: Annotated[str, Form(description='JSON list, one amount per row of the lab bill, e.g. ["450.00"]')],
-    update_entry_total: Annotated[bool, Form()] = False,
     delivery: Annotated[Delivery, Form()] = "preview",
     entry_id: Annotated[str | None, Form()] = None,
     force_new: Annotated[bool, Form()] = False,
@@ -351,8 +363,8 @@ async def render_metropolis_bill(
     db=Depends(get_db),
     cfg: PortalConfig = Depends(get_config),
 ):
-    """Edit the lab's own PDF in memory (only the permitted cells), verify, save the amounts and the lab bill
-    number on the entry, then return the PDF or email it. `409 total_mismatch` asks first; nothing is stored."""
+    """Edit the lab's own PDF in memory (only the permitted cells), verify, save test amounts and the lab bill
+    number on the entry without changing its financial totals, then return the PDF or email it."""
     partner = _partner(cfg, scope, "metropolis", "edit_pdf")
     data = await _read_upload(file, cfg)
     try:
@@ -363,7 +375,6 @@ async def render_metropolis_bill(
             data=data,
             amounts=service.parse_amounts(amounts),
             lab_cost=service.parse_money(lab_cost, "Lab cost"),
-            update_total=update_entry_total,
             entry_id=entry_id,
             force_new=force_new,
             actor_id=scope.user.id,

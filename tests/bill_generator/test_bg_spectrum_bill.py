@@ -1,11 +1,14 @@
 """Layout golden tests: the generated bills must match the two measured sample bills."""
 
+from decimal import Decimal
+
 import pymupdf
 import pytest
 
 from app.core.config import BillCfg
 from app.domain.bills.data import build_bill_data
 from app.domain.bills.errors import BillError
+from app.modules.bill_generator import service
 from app.partners.spectrum import bill
 
 CFG = BillCfg(
@@ -72,6 +75,20 @@ def test_with_client_variant_matches_sample(samples, ruju_entry) -> None:
     data = build_bill_data(ruju_entry, include_client=True)
     pdf = bill.render(data, include_client=True, bill_cfg=CFG)
     _assert_matches_sample(samples / "spectrum" / "RUJU_PRASANNAJI-bill_08-11-2024.pdf", pdf)
+
+
+async def test_spectrum_render_applies_bill_only_discount(bg_cfg, ruju_entry) -> None:
+    original_discount = ruju_entry["discount_amount"]
+    pdf, _ = await service.spectrum_pdf(
+        bg_cfg.partners["spectrum"],
+        ruju_entry,
+        include_client=True,
+        discount_amount=Decimal("100"),
+    )
+    text = pymupdf.open(stream=pdf, filetype="pdf")[0].get_text()
+    assert "Discount Given" in text and "Net Total Amount" in text
+    assert "100" in text and "One Thousand One Hundred Only" in text
+    assert ruju_entry["discount_amount"] == original_discount
 
 
 def test_fonts_are_embedded_open_fonts(sushant_entry, ruju_entry) -> None:

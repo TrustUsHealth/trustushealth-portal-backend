@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from app.domain import money
@@ -43,7 +44,9 @@ def bill_filename(patient_name: str, day: date) -> str:
     return f"{base}-bill_{day:%d-%m-%Y}.pdf"
 
 
-def build_bill_data(entry: dict[str, Any], *, include_client: bool) -> BillData:
+def build_bill_data(
+    entry: dict[str, Any], *, include_client: bool, discount_amount: Decimal | None = None
+) -> BillData:
     tests = list(entry.get("tests") or [])
     raw_amounts = list(entry.get("test_amounts") or [])
     if not tests or len(tests) != len(raw_amounts):
@@ -54,7 +57,8 @@ def build_bill_data(entry: dict[str, Any], *, include_client: bool) -> BillData:
         raise BillError(422, "client_name_required", "Enter the client name, or switch off 'Include client name'.")
 
     gross = money.total(amounts)
-    discount = money.opt(entry.get("discount_amount")) or money.ZERO
+    discount = money.opt(discount_amount) if discount_amount is not None else money.opt(entry.get("discount_amount"))
+    discount = discount or money.ZERO
     if discount > gross:
         raise BillError(422, "discount_too_large", "The discount cannot be more than the total.")
     net = gross - discount

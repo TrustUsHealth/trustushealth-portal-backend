@@ -39,6 +39,7 @@ log = logging.getLogger(__name__)
 COUNTERS = "counters"
 COUNTER_ID = "bill_no"
 MERGE_FIELDS = [f for f in EDITABLE if f not in ("partner_key", "registration_date")]
+PRESERVED_BILL_FIELDS = ("gross_amount", "discount_amount", "lab_cost", "net_amount", "margin", "status")
 
 
 class _VersionConflict(Exception):
@@ -200,7 +201,14 @@ def plan_merge(
     return fill, conflicts
 
 
-async def _apply(db: AsyncDatabase, existing: dict[str, Any], changes: dict[str, Any], actor_id: str) -> dict[str, Any]:
+async def _apply(
+    db: AsyncDatabase,
+    existing: dict[str, Any],
+    changes: dict[str, Any],
+    actor_id: str,
+    *,
+    preserve_financials: bool = False,
+) -> dict[str, Any]:
     merged = dict(existing)
     for k, v in changes.items():
         if v is None:
@@ -209,6 +217,8 @@ async def _apply(db: AsyncDatabase, existing: dict[str, Any], changes: dict[str,
             merged[k] = v
     derived = derive(merged)
     values = {**changes, **derived}
+    if preserve_financials:
+        values.update({key: existing.get(key) for key in PRESERVED_BILL_FIELDS})
     ops: dict[str, Any] = {
         "$set": {
             **{k: v for k, v in values.items() if v is not None},
@@ -228,7 +238,14 @@ async def _apply(db: AsyncDatabase, existing: dict[str, Any], changes: dict[str,
 
 # ───────────────────────────── create / merge ─────────────────────────────
 async def _create(
-    db: AsyncDatabase, cfg: PortalConfig, inc: dict[str, Any], *, module: str, actor_id: str, resolutions: dict
+    db: AsyncDatabase,
+    cfg: PortalConfig,
+    inc: dict[str, Any],
+    *,
+    module: str,
+    actor_id: str,
+    resolutions: dict,
+    preserve_financials: bool = False,
 ) -> UpsertResult:
     final = clean_fields(inc, cfg, defaults=True)
     final = {k: v for k, v in final.items() if not empty(v)}
@@ -248,7 +265,16 @@ async def _create(
     except DuplicateKeyError:  # lost a race with a simultaneous save of the same patient
         m = await find_matches(db, cfg, inc)
         if m.exact:
-            return await _merge(db, cfg, m.exact, inc, module=module, actor_id=actor_id, resolutions=resolutions)
+            return await _merge(
+                db,
+                cfg,
+                m.exact,
+                inc,
+                module=module,
+                actor_id=actor_id,
+                resolutions=resolutions,
+                preserve_financials=preserve_financials,
+            )
         raise EntryError(409, "This patient was just saved by someone else. Please reload and check.") from None
     eid = res.inserted_id
     await db[repo.COL].update_one(
@@ -271,7 +297,10 @@ async def _merge(
     module: str,
     actor_id: str,
     resolutions: dict[str, str],
+    preserve_financials: bool = False,
 ) -> UpsertResult:
+    if preserve_financials:
+        inc = {k: v for k, v in inc.items() if k not in ("gross_amount", "discount_amount", "lab_cost")}
     for _ in range(3):
         fill, conflicts = plan_merge(cfg, existing, inc, resolutions)
         if conflicts:
@@ -294,7 +323,7 @@ async def _merge(
             return UpsertResult("unchanged", entry=existing, months=months_of(existing))
         check_final(cfg, module, {**existing, **fill})
         try:
-            new = await _apply(db, existing, fill, actor_id)
+            new = await _apply(db, existing, fill, actor_id, preserve_financials=preserve_financials)
         except _VersionConflict:
             existing = await repo.get_entry(db, str(existing["_id"])) or existing
             continue
@@ -319,6 +348,7 @@ async def upsert(
     target_entry_id: str | None = None,
     force_new: bool = False,
     resolutions: dict[str, str] | None = None,
+    preserve_financials: bool = False,
 ) -> UpsertResult:
     """Create a new entry or update the existing one, after the duplicate check."""
     resolutions = resolutions or {}
@@ -336,11 +366,29 @@ async def upsert(
             raise EntryError(404, "The chosen entry was not found.")
         if target["partner_key"] != inc["partner_key"] or target["registration_date"] != inc["registration_date"]:
             raise EntryError(400, "A match must have the same lab and registration date.")
-        return await _merge(db, cfg, target, inc, module=module, actor_id=actor_id, resolutions=resolutions)
+        return await _merge(
+            db,
+            cfg,
+            target,
+            inc,
+            module=module,
+            actor_id=actor_id,
+            resolutions=resolutions,
+            preserve_financials=preserve_financials,
+        )
 
     m = await find_matches(db, cfg, inc)
     if m.exact and not force_new:
-        return await _merge(db, cfg, m.exact, inc, module=module, actor_id=actor_id, resolutions=resolutions)
+        return await _merge(
+            db,
+            cfg,
+            m.exact,
+            inc,
+            module=module,
+            actor_id=actor_id,
+            resolutions=resolutions,
+            preserve_financials=preserve_financials,
+        )
     if m.exact and m.rule == 1:
         raise EntryError(
             409,
@@ -356,7 +404,15 @@ async def upsert(
                 possible=m.possible,
             ),
         )
-    return await _create(db, cfg, inc, module=module, actor_id=actor_id, resolutions=resolutions)
+    return await _create(
+        db,
+        cfg,
+        inc,
+        module=module,
+        actor_id=actor_id,
+        resolutions=resolutions,
+        preserve_financials=preserve_financials,
+    )
 
 
 # ───────────────────────────── edit / delete ─────────────────────────────
@@ -369,6 +425,7 @@ async def update_entry(
     module: str,
     actor_id: str,
     expected_version: int | None = None,
+    preserve_financials: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any], list[str]]:
     """Edit the same record (bill_no never changes). Returns (before, after, names of changed fields)."""
     existing = await repo.get_entry(db, entry_id)
@@ -379,6 +436,8 @@ async def update_entry(
     if "partner_key" in patch:
         raise EntryError(422, "The laboratory of an entry cannot be changed.")
     cleaned = clean_fields(patch, cfg, defaults=False)
+    if preserve_financials:
+        cleaned = {k: v for k, v in cleaned.items() if k not in ("gross_amount", "discount_amount", "lab_cost")}
     for key in ("patient_name", "registration_date"):
         if key in cleaned and cleaned[key] is None:
             raise EntryError(422, f"{_label(cfg, key)} cannot be empty.")
@@ -403,7 +462,7 @@ async def update_entry(
             "Open that entry instead of creating a second one.",
         )
     try:
-        new = await _apply(db, existing, changes, actor_id)
+        new = await _apply(db, existing, changes, actor_id, preserve_financials=preserve_financials)
     except _VersionConflict:
         raise EntryError(409, "This entry was changed by someone else. Please reload it.") from None
     except DuplicateKeyError:

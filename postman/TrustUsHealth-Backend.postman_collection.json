@@ -142,6 +142,11 @@
       "type": "string"
     },
     {
+      "key": "billDiscountAmount",
+      "value": "0.00",
+      "type": "string"
+    },
+    {
       "key": "billNoOriginal",
       "value": "",
       "type": "string"
@@ -2500,7 +2505,7 @@
             "description": "Updates test amounts, discount, lab cost and/or client name on the same entry. expected_version is optional; supply it for optimistic concurrency protection. Money values are decimal strings.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"test_amounts\": [\"450.00\"],\n  \"discount_amount\": \"0.00\",\n  \"lab_cost\": \"300.00\",\n  \"expected_version\": {{billEntryVersion}}\n}",
+              "raw": "{\n  \"test_amounts\": [\"450.00\"],\n  \"discount_amount\": \"{{billDiscountAmount}}\",\n  \"lab_cost\": \"300.00\",\n  \"expected_version\": {{billEntryVersion}}\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2533,10 +2538,10 @@
             "method": "POST",
             "header": [],
             "url": "{{baseUrl}}/api/v1/bill_generator/spectrum/render",
-            "description": "Returns a PDF for preview/download, or {sent:true} when delivery=email. Email is sent only to the currently signed-in user. Set delivery to preview, download or email.",
+            "description": "Returns a PDF for preview/download, or {sent:true} when delivery=email. Email is sent only to the currently signed-in user. Set delivery to preview, download or email. Optional bill_discount_amount overrides the saved discount for this bill only; use 0 to omit the discount block, or null to use the saved discount. The override is never stored.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"entry_id\": \"{{billEntryId}}\",\n  \"include_client\": false,\n  \"delivery\": \"{{billDelivery}}\"\n}",
+              "raw": "{\n  \"entry_id\": \"{{billEntryId}}\",\n  \"include_client\": false,\n  \"delivery\": \"{{billDelivery}}\",\n  \"bill_discount_amount\": \"{{billDiscountAmount}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2610,7 +2615,7 @@
             "method": "POST",
             "header": [],
             "url": "{{baseUrl}}/api/v1/bill_generator/metropolis/render",
-            "description": "Select the same original Metropolis PDF used for inspection. Form fields: amounts is a JSON array with one decimal string per test row; lab_cost is optional; delivery is preview/download/email. update_entry_total=true explicitly accepts a changed total. force_new=true explicitly creates a distinct entry when a possible patient match exists. The endpoint verifies the edited PDF before saving amounts and replacing bill_no with the lab number. A lab bill number owned by another entry returns 409 bill_no_taken; repeated processing of the same bill is idempotent.",
+            "description": "Select the same original Metropolis PDF used for inspection. Form fields: amounts is a JSON array with one decimal string per test row; lab_cost is optional; delivery is preview/download/email. force_new=true explicitly creates a distinct entry when a possible patient match exists. The endpoint verifies the edited PDF before saving test amounts and replacing bill_no with the lab number; existing entry financial fields are unchanged. A lab bill number owned by another entry returns 409 bill_no_taken; repeated processing of the same bill is idempotent.",
             "body": {
               "mode": "formdata",
               "formdata": [
@@ -2622,11 +2627,6 @@
                 {
                   "key": "amounts",
                   "value": "{{billAmounts}}",
-                  "type": "text"
-                },
-                {
-                  "key": "update_entry_total",
-                  "value": "{{billUpdateEntryTotal}}",
                   "type": "text"
                 },
                 {

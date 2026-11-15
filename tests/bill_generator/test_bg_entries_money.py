@@ -19,6 +19,7 @@ RAW = {
     "test_amounts": ["200", "150"],
     "lab_cost": "100",
 }
+FINANCIAL_KEYS = ("gross_amount", "discount_amount", "lab_cost", "net_amount", "margin")
 
 
 def test_amounts_are_decimal_and_gross_is_their_sum(bg_cfg) -> None:
@@ -42,14 +43,14 @@ def test_derived_values_are_exact() -> None:
             "patient_name": "A B",
             "registration_date": "2026-10-14",
             "test_amounts": [Decimal("100.10"), Decimal("200.20")],
-            "gross_amount": Decimal("1"),  # ignored: the amounts win
+            "gross_amount": Decimal("250"),
             "discount_amount": Decimal("50.05"),
             "lab_cost": Decimal("100"),
         }
     )
-    assert d["gross_amount"] == Decimal("300.30")
-    assert d["net_amount"] == Decimal("250.25")
-    assert d["margin"] == Decimal("150.25")
+    assert d["gross_amount"] == Decimal("250.00")
+    assert d["net_amount"] == Decimal("199.95")
+    assert d["margin"] == Decimal("99.95")
     assert d["status"] == "complete"
 
 
@@ -94,6 +95,48 @@ async def test_same_patient_again_keeps_one_entry_and_one_bill_no(bg_cfg, bg_db)
     assert second.outcome == "unchanged"
     assert second.entry["_id"] == first.entry["_id"]
     assert second.entry["bill_no"] == first.entry["bill_no"]
+
+
+async def test_bill_amount_edits_preserve_existing_financials(bg_cfg, bg_db) -> None:
+    entry = (await entry_service.upsert(bg_db, bg_cfg, RAW, module="bill_generator", actor_id="u1")).entry
+    before_financials = {key: entry[key] for key in FINANCIAL_KEYS}
+    _, updated, changed = await entry_service.update_entry(
+        bg_db,
+        bg_cfg,
+        str(entry["_id"]),
+        {
+            "test_amounts": ["400", "100"],
+            "discount_amount": "25",
+            "lab_cost": "50",
+        },
+        module="bill_generator",
+        actor_id="u1",
+        preserve_financials=True,
+    )
+    assert updated["test_amounts"] == [Decimal("400.00"), Decimal("100.00")]
+    assert {key: updated[key] for key in FINANCIAL_KEYS} == before_financials
+    assert set(changed) == {"test_amounts"}
+
+
+async def test_bill_entry_merge_preserves_existing_financials(bg_cfg, bg_db) -> None:
+    entry = (await entry_service.upsert(bg_db, bg_cfg, RAW, module="bill_generator", actor_id="u1")).entry
+    incoming = {
+        **RAW,
+        "test_amounts": ["400", "100"],
+        "discount_amount": "25",
+        "lab_cost": "50",
+    }
+    result = await entry_service.upsert(
+        bg_db,
+        bg_cfg,
+        incoming,
+        module="bill_generator",
+        actor_id="u1",
+        preserve_financials=True,
+        resolutions={"test_amounts": "incoming"},
+    )
+    assert result.entry["test_amounts"] == [Decimal("400.00"), Decimal("100.00")]
+    assert {key: result.entry[key] for key in FINANCIAL_KEYS} == {key: entry[key] for key in FINANCIAL_KEYS}
 
 
 async def test_replace_bill_no_keeps_the_original_and_is_idempotent(bg_cfg, bg_db) -> None:
