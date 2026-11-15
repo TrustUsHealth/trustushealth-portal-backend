@@ -1,5 +1,6 @@
 """The Metropolis flow end to end (service level): match, edit, save, lab bill number."""
 
+from datetime import date
 from decimal import Decimal
 
 import pymupdf
@@ -124,3 +125,32 @@ def test_rate_limit_is_per_user_and_per_minute() -> None:
         service.check_rate("render-test", "user-a", service.RENDER_PER_MINUTE)
     assert exc.value.status == 429
     service.check_rate("render-test", "user-b", service.RENDER_PER_MINUTE)  # another user is unaffected
+
+
+async def test_bill_email_includes_test_date_and_highlights_patient_date_and_lab(bg_cfg) -> None:
+    class MailerStub:
+        email = None
+
+        async def send_email(self, email):
+            self.email = email
+
+    mailer = MailerStub()
+    await service.send_bill_email(
+        mailer,
+        bg_cfg,
+        to="staff@example.com",
+        patient_name="Ramesh Gada",
+        test_date=date(2026, 11, 2),
+        lab_name="Metropolis Healthcare",
+        bill_no="12345",
+        pdf=b"%PDF",
+        filename="report.pdf",
+    )
+
+    assert mailer.email.text.startswith("Dear Ramesh Gada,")
+    assert "Test date: 02 November 2026" in mailer.email.text
+    assert mailer.email.header_highlights == (
+        ("Patient", "Ramesh Gada"),
+        ("Test date", "02 November 2026"),
+        ("Laboratory", "Metropolis Healthcare"),
+    )

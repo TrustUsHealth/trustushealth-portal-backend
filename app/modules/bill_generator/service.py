@@ -423,14 +423,35 @@ class _Safe(dict):
 
 
 async def send_bill_email(
-    mailer: Mailer, cfg: PortalConfig, *, to: str, patient_name: str, bill_no: str | None, pdf: bytes, filename: str
+    mailer: Mailer,
+    cfg: PortalConfig,
+    *,
+    to: str,
+    patient_name: str,
+    test_date: date,
+    lab_name: str,
+    bill_no: str | None,
+    pdf: bytes,
+    filename: str,
 ) -> None:
-    values = _Safe(patient_name=patient_name, brand=cfg.app.brand.name, bill_no=bill_no or "")
+    display_date = test_date.strftime("%d %B %Y")
+    values = _Safe(
+        patient_name=patient_name,
+        test_date=display_date,
+        lab_name=lab_name,
+        brand=cfg.app.brand.name,
+        bill_no=bill_no or "",
+    )
     await mailer.send_email(
         OutboundEmail(
             to=to,
             subject=cfg.delivery.email.subject.format_map(values),
             text=cfg.delivery.email.body.format_map(values),
+            header_highlights=(
+                ("Patient", patient_name),
+                ("Test date", display_date),
+                ("Laboratory", lab_name),
+            ),
             attachments=(EmailAttachment(filename=filename, content=pdf, content_type="application/pdf"),),
         )
     )

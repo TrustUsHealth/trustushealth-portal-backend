@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from datetime import date
 from typing import Annotated
 from urllib.parse import quote
 
@@ -19,7 +20,7 @@ from app.domain.entries import repository as entry_repo
 from app.domain.entries import service as entry_service
 from app.domain.entries.dedupe import find_matches
 from app.domain.entries.model import EDITABLE, EntryError
-from app.domain.parsing import UploadError, UnreadableFile, ParseError, parse_report, safe_filename, validate_upload
+from app.domain.parsing import ParseError, UnreadableFile, UploadError, parse_report, safe_filename, validate_upload
 from app.modules.bill_generator import service
 from app.modules.bill_generator.schemas import (
     BillDataPatchIn,
@@ -120,6 +121,10 @@ async def _deliver(
                 cfg,
                 to=user.email,
                 patient_name=entry["patient_name"],
+                test_date=date.fromisoformat(
+                    (entry.get("collection_time") or entry["registration_date"])[:10]
+                ),
+                lab_name=cfg.partners[entry["partner_key"]].name,
                 bill_no=entry.get("bill_no"),
                 pdf=pdf,
                 filename=filename,
