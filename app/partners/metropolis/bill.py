@@ -28,6 +28,9 @@ DATE_FORMATS = ["%d/%m/%Y %I:%M %p"]
 TOL = 0.05
 FONT = "helv"
 
+DIFF_LEVEL = 64  # a pixel counts as changed only if a colour channel moves by more than this (0-255)
+DPI = 100
+
 Rect4 = tuple[float, float, float, float]
 _ROW_KEY = re.compile(r"^row_\d+$")
 _CELL_NAME = {
@@ -386,15 +389,48 @@ def _boxes(page: pymupdf.Page) -> tuple[list[tuple], list[tuple]]:
     return drawn, images
 
 
-def _raster(page: pymupdf.Page, zones: list[Rect4]) -> bytes:
-    mat = pymupdf.Matrix(100 / 72, 100 / 72)
+def _raster(page: pymupdf.Page, zones: list[Rect4]) -> tuple[int, int, int, bytes]:
+    """100 dpi render with the given zones painted white: (width, height, channels, samples)."""
+    mat = pymupdf.Matrix(DPI / 72, DPI / 72)
     pix = page.get_pixmap(matrix=mat, alpha=False)
     for zone in zones:
         z = pymupdf.Rect(zone[0] - 3, zone[1] - 3, zone[2] + 3, zone[3] + 3)
         z.intersect(page.rect)
         if not z.is_empty:
             pix.set_rect((z * mat).irect, (255, 255, 255))
-    return bytes(pix.samples)
+    return pix.width, pix.height, pix.n, bytes(pix.samples)
+
+
+def _raster_diff(a: tuple[int, int, int, bytes], b: tuple[int, int, int, bytes]) -> tuple[int, Rect4 | None]:
+    """Count pixels that really differ (> DIFF_LEVEL on any channel) and where, in points.
+
+    MuPDF rewrites the content stream when redacting, which can move untouched glyphs by hundredths of a point.
+    That changes anti-aliased edge pixels slightly, so exact byte equality is too strict. A deleted glyph,
+    moved line or shifted image changes pixels by far more than DIFF_LEVEL.
+    Returns (-1, None) when the render sizes differ.
+    """
+    wa, ha, na, sa = a
+    wb, hb, nb, sb = b
+    if (wa, ha, na) != (wb, hb, nb):
+        return -1, None
+    stride = wa * na
+    count = 0
+    x0, y0, x1, y1 = wa, ha, -1, -1
+    for row in range(ha):
+        ra = sa[row * stride : (row + 1) * stride]
+        rb = sb[row * stride : (row + 1) * stride]
+        if ra == rb:
+            continue
+        for i, (p, q) in enumerate(zip(ra, rb, strict=True)):
+            if abs(p - q) > DIFF_LEVEL:
+                px = i // na
+                count += 1
+                x0, x1 = min(x0, px), max(x1, px)
+                y0, y1 = min(y0, row), max(y1, row)
+    if not count:
+        return 0, None
+    s = 72 / DPI
+    return count, (x0 * s, y0 * s, (x1 + 1) * s, (y1 + 1) * s)
 
 
 def _verify(original: bytes, edited: bytes, changes: list[tuple[Cell, str, Rect4]]) -> None:
@@ -432,8 +468,15 @@ def _verify(original: bytes, edited: bytes, changes: list[tuple[Cell, str, Rect4
             raise _fail("images moved")
 
         zones = [area for _, _, area in changes] + [cell.rect for cell, _, _ in changes]
-        if _raster(pa, zones) != _raster(pb, zones):
-            raise _fail("the page differs outside the edited cells")
+        changed, box = _raster_diff(_raster(pa, zones), _raster(pb, zones))
+        if changed == -1:
+            raise _fail("the page size changed")
+        if changed:
+            x0, y0, x1, y1 = box  # type: ignore[misc]
+            raise _fail(
+                f"the page differs outside the edited cells: {changed} pixels between "
+                f"x {x0:.0f}-{x1:.0f} pt and y {y0:.0f}-{y1:.0f} pt"
+            )
     finally:
         a.close()
         b.close()
