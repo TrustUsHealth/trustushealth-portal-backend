@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -23,7 +23,7 @@ from app.domain.bills.errors import BillError
 from app.domain.bills.words import amount_words
 from app.domain.parsing import standardize as std
 
-AMOUNT_RE = re.compile(r"^\d+\.\d{2}$")
+AMOUNT_RE = re.compile(r"^\d[\d,]*\.\d{2}$")  # 434.00, 1,534.50, 3298.50
 DATE_FORMATS = ["%d/%m/%Y %I:%M %p"]
 TOL = 0.05
 FONT = "helv"
@@ -54,6 +54,7 @@ class Cell:
     size: float
     color: tuple[float, ...]
     words: tuple[tuple[float, float, float, float, str], ...]  # original words, rounded, for verification
+    max_x: float | None = None  # new text must not run past this x (the next label on the same line)
 
 
 @dataclass(frozen=True)
@@ -152,6 +153,50 @@ def _cell(spans: list[dict], words: list[tuple]) -> Cell:
     )
 
 
+def _received_words(lines: list[dict[str, Any]], table_bottom: float) -> tuple[list[tuple], float | None]:
+    """The 'Amount received in words' value, which can run past the column split and share its line with 'Billed by'.
+
+    Returns (value words, x where the next label on the line starts).
+    """
+    for ln in lines:
+        if ln["cy"] <= table_bottom:
+            continue
+        ws = ln["w"]
+        texts = [w[4] for w in ws]
+        if ":" not in texts:
+            continue
+        i = texts.index(":")
+        if " ".join(texts[:i]).strip().casefold() != "amount received in words":
+            continue
+        rest = ws[i + 1 :]
+        stop = next((k for k, w in enumerate(rest) if w[4] == ":"), len(rest))  # the next label's colon
+        value = rest[:stop]
+        end = max((k for k, w in enumerate(value) if w[4].upper().startswith("ONLY")), default=None)
+        if end is None:
+            return [], None
+        following = rest[end + 1] if end + 1 < len(rest) else None
+        return value[: end + 1], (following[0] if following else None)
+    return [], None
+
+
+def _row_text(amount: Decimal) -> str:
+    """Row amounts keep the lab's thousands separator: 1,534.50 (the summary block prints 3298.50 without one)."""
+    return f"{money.to_decimal(amount):,.2f}"
+
+
+def _fit_size(cell: Cell, text: str) -> float:
+    """Original size, or smaller if the text would run into the next label on its line."""
+    if cell.max_x is None:
+        return cell.size
+    available = cell.max_x - cell.rect[0]
+    width = pymupdf.get_text_length(text, fontname=FONT, fontsize=cell.size)
+    if width <= available:
+        return cell.size
+    size = cell.size * available / width
+    if size < 6:
+        raise BillError(422, "words_too_long", "The amount in words is too long to fit on this bill.")
+    return size
+
 def read_bill(data: bytes) -> LabBill:
     """Read the lab's bill PDF in memory. CPU-bound: call through `asyncio.to_thread`."""
     try:
@@ -236,10 +281,13 @@ def read_bill(data: bytes) -> LabBill:
             grand=_cell(spans, [grand_w]),
             received=_cell(spans, [received_w]),
         )
-        words_ws = summary.get("amount received in words") or []
+        words_ws, next_label_x = _received_words(lines, table_bottom)
         if not words_ws or words_ws[0][4] != "(INR)":
             raise _unreadable("'amount received in words' not found")
-        cells["words"] = _cell(spans, words_ws)
+        words_cell = _cell(spans, words_ws)
+        if next_label_x is not None:
+            words_cell = replace(words_cell, max_x=next_label_x - 6)
+        cells["words"] = words_cell
 
         pay_idx = next((i for i, ln in enumerate(lines) if {"Payment", "Mode"} <= {w[4] for w in ln["w"]}), None)
         if pay_idx is None:
@@ -291,9 +339,9 @@ def read_bill(data: bytes) -> LabBill:
 
 
 # ───────────────────────────── editing ─────────────────────────────
-def _place(cell: Cell, text: str, align: str) -> tuple[float, Rect4]:
+def _place(cell: Cell, text: str, align: str, size: float) -> tuple[float, Rect4]:
     """x for the new text and the area it occupies (used to ignore it when checking nothing else moved)."""
-    width = pymupdf.get_text_length(text, fontname=FONT, fontsize=cell.size)
+    width = pymupdf.get_text_length(text, fontname=FONT, fontsize=size)
     x0, _, x1, _ = cell.rect
     if align == "right":
         x = x1 - width
@@ -328,7 +376,7 @@ def edit_bill(data: bytes, lab: LabBill, *, amounts: list[Decimal], discount: De
     plan: list[tuple[str, str]] = []
     for i, (row, amount) in enumerate(zip(lab.rows, amounts, strict=True)):
         if amount != row.amount:
-            plan.append((f"row_{i}", money.fixed(amount)))
+            plan.append((f"row_{i}", _row_text(amount)))
     for key, old, new in (
         ("gross", lab.gross, gross),
         ("discount", lab.discount, discount),
@@ -359,8 +407,9 @@ def edit_bill(data: bytes, lab: LabBill, *, amounts: list[Decimal], discount: De
         changes: list[tuple[Cell, str, Rect4]] = []
         for key, text in plan:
             cell = lab.cells[key]
-            x, area = _place(cell, text, _align(key))
-            page.insert_text(pymupdf.Point(x, cell.baseline), text, fontname=FONT, fontsize=cell.size, color=cell.color)
+            size = _fit_size(cell, text)
+            x, area = _place(cell, text, _align(key), size)
+            page.insert_text(pymupdf.Point(x, cell.baseline), text, fontname=FONT, fontsize=size, color=cell.color)
             changes.append((cell, text, area))
         out = doc.tobytes(garbage=1, deflate=True)
     finally:
