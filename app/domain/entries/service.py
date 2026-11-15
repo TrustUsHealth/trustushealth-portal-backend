@@ -3,6 +3,9 @@
 Bill numbers: the entry is inserted first (the unique keys settle duplicate races), then the next counter value is
 assigned. A failed duplicate insert therefore never burns a bill number. If the process dies between the two steps,
 `assign_missing_bill_nos` completes the entry at the next start.
+
+A lab that prints its own bill number (Metropolis) replaces the internal one through `replace_bill_no`; the internal
+number is kept in `bill_no_original` and the counter ignores lab numbers.
 """
 
 from __future__ import annotations
@@ -63,11 +66,20 @@ class UpsertResult:
 
 # ───────────────────────────── bill_no ─────────────────────────────
 async def _highest_issued(db: AsyncDatabase) -> int:
-    top = await db[repo.COL].find({"bill_no": {"$exists": True}}).sort("bill_no", -1).limit(1).to_list(length=1)
-    try:
-        return int(top[0]["bill_no"]) if top else 0
-    except (KeyError, ValueError):
-        return 0
+    """Highest INTERNAL number: lab numbers that replaced one are ignored; their `bill_no_original` counts."""
+    best = 0
+    queries = (
+        ("bill_no", {"bill_no": {"$exists": True}, "bill_no_original": {"$exists": False}}),
+        ("bill_no_original", {"bill_no_original": {"$exists": True}}),
+    )
+    for name, flt in queries:
+        top = await db[repo.COL].find(flt).sort(name, -1).limit(1).to_list(length=1)
+        try:
+            if top:
+                best = max(best, int(top[0][name]))
+        except (KeyError, ValueError):
+            continue
+    return best
 
 
 async def ensure_counter(db: AsyncDatabase, cfg: PortalConfig) -> None:
@@ -101,6 +113,50 @@ async def assign_missing_bill_nos(db: AsyncDatabase, cfg: PortalConfig) -> int:
             {"_id": e["_id"], "bill_no": {"$exists": False}}, {"$set": {"bill_no": await next_bill_no(db, cfg)}}
         )
     return len(pending)
+
+
+async def bill_no_owner(db: AsyncDatabase, bill_no: str) -> dict[str, Any] | None:
+    """The entry that currently holds this bill number, if any (read only)."""
+    return await db[repo.COL].find_one({"bill_no": bill_no}, {"_id": 1})
+
+
+async def replace_bill_no(
+    db: AsyncDatabase, cfg: PortalConfig, entry_id: str, lab_bill_no: str, *, actor_id: str
+) -> tuple[dict[str, Any], bool]:
+    """A lab's own bill number replaces `bill_no`. The internal number is kept in `bill_no_original`.
+
+    Returns (entry, replaced). Idempotent: the same number again changes nothing. A number held by another entry
+    is refused with 409 `bill_no_taken` and nothing is written.
+    """
+    existing = await repo.get_entry(db, entry_id)
+    if existing is None:
+        raise EntryError(404, "Entry not found.")
+    if existing.get("bill_no") == lab_bill_no:
+        return existing, False
+    taken = {
+        "code": "bill_no_taken",
+        "message": f"Bill No {lab_bill_no} is already used by another entry.",
+    }
+    owner = await db[repo.COL].find_one({"bill_no": lab_bill_no, "_id": {"$ne": existing["_id"]}}, {"_id": 1})
+    if owner is not None:
+        raise EntryError(409, taken)
+    internal = existing.get("bill_no") or await next_bill_no(db, cfg)
+    sets: dict[str, Any] = {
+        "bill_no": lab_bill_no,
+        "bill_no_original": existing.get("bill_no_original") or internal,
+        "updated_at": utcnow(),
+        "updated_by": actor_id,
+    }
+    try:
+        res = await db[repo.COL].update_one(
+            {"_id": existing["_id"], "version": existing.get("version", 1)},
+            {"$set": sets, "$inc": {"version": 1}},
+        )
+    except DuplicateKeyError:
+        raise EntryError(409, taken) from None
+    if res.matched_count == 0:
+        raise EntryError(409, "This entry was changed by someone else a moment ago. Please try again.")
+    return await db[repo.COL].find_one({"_id": existing["_id"]}), True
 
 
 # ───────────────────────────── helpers ─────────────────────────────

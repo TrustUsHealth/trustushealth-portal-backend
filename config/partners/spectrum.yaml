@@ -25,5 +25,8 @@ tests:
   repeat_pages: merge       # same heading on several pages counts once
 
 bill:
-  header_lines: ["Spectrum Laboratory"]    # plain text, copied from the sample bill; no images
-  sections: [bill_no, patient_details, tests_table, amount_summary]
+  mode: generate                          # ReportLab, layouts measured from the sample bills
+  variants: [plain, with_client]          # chosen by the Include client name option
+  signature_asset: assets/bill/signature.png
+  amount_words: indian_title_case_only    # "One Thousand Two Hundred Only"
+  discount_block: when_discount_above_zero
