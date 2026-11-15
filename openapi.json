@@ -278,6 +278,192 @@
         "title": "BelowCostOut",
         "type": "object"
       },
+      "BillDataPatchIn": {
+        "additionalProperties": false,
+        "properties": {
+          "client_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "expected_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Version"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "test_amounts": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "maximum": 10000000.0,
+                      "minimum": 0.0,
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Amounts"
+          },
+          "tests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tests"
+          }
+        },
+        "title": "BillDataPatchIn",
+        "type": "object"
+      },
+      "Body_bill_generator_inspect_metropolis_bill": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_bill_generator_inspect_metropolis_bill",
+        "type": "object"
+      },
+      "Body_bill_generator_parse_spectrum_report": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_bill_generator_parse_spectrum_report",
+        "type": "object"
+      },
+      "Body_bill_generator_render_metropolis_bill": {
+        "properties": {
+          "amounts": {
+            "description": "JSON list, one amount per row of the lab bill, e.g. [\"450.00\"]",
+            "title": "Amounts",
+            "type": "string"
+          },
+          "delivery": {
+            "default": "preview",
+            "enum": [
+              "preview",
+              "download",
+              "email"
+            ],
+            "title": "Delivery",
+            "type": "string"
+          },
+          "entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Id"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "force_new": {
+            "default": false,
+            "title": "Force New",
+            "type": "boolean"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          }
+        },
+        "required": [
+          "file",
+          "amounts"
+        ],
+        "title": "Body_bill_generator_render_metropolis_bill",
+        "type": "object"
+      },
       "Body_patient_registry_parse_entry_report": {
         "properties": {
           "file": {
@@ -694,6 +880,227 @@
           "entries"
         ],
         "title": "DuplicateHintOut",
+        "type": "object"
+      },
+      "EntryBillOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "bill_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No"
+          },
+          "bill_no_original": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bill No Original"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "gross_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gross Amount"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "margin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Admin only; null for everyone else",
+            "title": "Margin"
+          },
+          "net_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Amount"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "partner_name": {
+            "title": "Partner Name",
+            "type": "string"
+          },
+          "patient_name": {
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "test_amounts": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Test Amounts",
+            "type": "array"
+          },
+          "tests": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "bill_no",
+          "status",
+          "version",
+          "partner_key",
+          "partner_name",
+          "patient_name",
+          "registration_date",
+          "updated_at"
+        ],
+        "title": "EntryBillOut",
         "type": "object"
       },
       "EntryCreateIn": {
@@ -2667,6 +3074,192 @@
         "title": "LabFinanceTotals",
         "type": "object"
       },
+      "LabInspectOut": {
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "bill_date": {
+            "format": "date",
+            "title": "Bill Date",
+            "type": "string"
+          },
+          "bill_no_taken": {
+            "default": false,
+            "title": "Bill No Taken",
+            "type": "boolean"
+          },
+          "entry_discount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Discount"
+          },
+          "entry_gross": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Gross"
+          },
+          "entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Id"
+          },
+          "entry_lab_cost": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Lab Cost"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "lab_bill_no": {
+            "title": "Lab Bill No",
+            "type": "string"
+          },
+          "lab_pid": {
+            "title": "Lab Pid",
+            "type": "string"
+          },
+          "match": {
+            "$ref": "#/components/schemas/MatchOut"
+          },
+          "patient_name": {
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "printed_discount": {
+            "title": "Printed Discount",
+            "type": "string"
+          },
+          "printed_grand": {
+            "title": "Printed Grand",
+            "type": "string"
+          },
+          "printed_gross": {
+            "title": "Printed Gross",
+            "type": "string"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/LabRowOut"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lab_bill_no",
+          "lab_pid",
+          "bill_date",
+          "patient_name",
+          "rows",
+          "printed_gross",
+          "printed_discount",
+          "printed_grand",
+          "match"
+        ],
+        "title": "LabInspectOut",
+        "type": "object"
+      },
+      "LabOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "generate",
+              "edit_pdf"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "mode"
+        ],
+        "title": "LabOut",
+        "type": "object"
+      },
       "LabRef": {
         "properties": {
           "color": {
@@ -2688,6 +3281,30 @@
           "color"
         ],
         "title": "LabRef",
+        "type": "object"
+      },
+      "LabRowOut": {
+        "properties": {
+          "amount": {
+            "description": "Prefilled from the entry where names match, else the printed amount",
+            "title": "Amount",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "printed_amount": {
+            "title": "Printed Amount",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "printed_amount",
+          "amount"
+        ],
+        "title": "LabRowOut",
         "type": "object"
       },
       "LabTable": {
@@ -2801,6 +3418,238 @@
         "title": "LabsOut",
         "type": "object"
       },
+      "ManualEntryIn": {
+        "additionalProperties": false,
+        "description": "New entry from the bill page (Spectrum): the duplicate check runs first.",
+        "properties": {
+          "age": {
+            "anyOf": [
+              {
+                "maximum": 130.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "age_unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Y",
+                  "M",
+                  "D"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Unit"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "discount_amount": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discount Amount"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "force_new": {
+            "default": false,
+            "title": "Force New",
+            "type": "boolean"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Male",
+                  "Female",
+                  "Other"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "lab_cost": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Cost"
+          },
+          "lab_pid": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lab Pid"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          },
+          "patient_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Patient Name",
+            "type": "string"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "referred_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referred By"
+          },
+          "registration_date": {
+            "format": "date",
+            "title": "Registration Date",
+            "type": "string"
+          },
+          "resolutions": {
+            "additionalProperties": {
+              "enum": [
+                "existing",
+                "incoming",
+                "both"
+              ],
+              "type": "string"
+            },
+            "title": "Resolutions",
+            "type": "object"
+          },
+          "target_entry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Entry Id"
+          },
+          "test_amounts": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "maximum": 10000000.0,
+                      "minimum": 0.0,
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Amounts"
+          },
+          "tests": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tests"
+          }
+        },
+        "required": [
+          "partner_key",
+          "patient_name",
+          "registration_date"
+        ],
+        "title": "ManualEntryIn",
+        "type": "object"
+      },
       "MarginByLab": {
         "properties": {
           "below_threshold": {
@@ -2832,6 +3681,33 @@
           "below_threshold"
         ],
         "title": "MarginByLab",
+        "type": "object"
+      },
+      "MatchOut": {
+        "properties": {
+          "entries": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "exact",
+              "possible",
+              "none"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "MatchOut",
         "type": "object"
       },
       "MatrixColumn": {
@@ -3481,6 +4357,49 @@
         "title": "ParsedFieldsOut",
         "type": "object"
       },
+      "ParsedOut": {
+        "description": "A Spectrum report read in memory. Nothing is stored; use the fields to start a bill.",
+        "properties": {
+          "duplicate_entry_ids": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Duplicate Entry Ids",
+            "type": "array"
+          },
+          "duplicate_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "exact",
+                  "possible"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate Kind"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "partner_key": {
+            "title": "Partner Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partner_key",
+          "fields"
+        ],
+        "title": "ParsedOut",
+        "type": "object"
+      },
       "PartnerOut": {
         "properties": {
           "key": {
@@ -3769,47 +4688,6 @@
         "title": "RevenueByLab",
         "type": "object"
       },
-      "SaveOut": {
-        "properties": {
-          "entry": {
-            "$ref": "#/components/schemas/EntryOut"
-          },
-          "filled_fields": {
-            "default": [],
-            "items": {
-              "type": "string"
-            },
-            "title": "Filled Fields",
-            "type": "array"
-          },
-          "outcome": {
-            "enum": [
-              "created",
-              "merged",
-              "unchanged"
-            ],
-            "title": "Outcome",
-            "type": "string"
-          },
-          "report_link": {
-            "default": "none",
-            "enum": [
-              "linked",
-              "already_linked",
-              "missing",
-              "none"
-            ],
-            "title": "Report Link",
-            "type": "string"
-          }
-        },
-        "required": [
-          "outcome",
-          "entry"
-        ],
-        "title": "SaveOut",
-        "type": "object"
-      },
       "SendOut": {
         "properties": {
           "sent": {
@@ -3821,6 +4699,52 @@
           "sent"
         ],
         "title": "SendOut",
+        "type": "object"
+      },
+      "SpectrumRenderIn": {
+        "additionalProperties": false,
+        "properties": {
+          "bill_discount_amount": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional bill-only discount; 0 suppresses the discount block, null uses the saved discount",
+            "title": "Bill Discount Amount"
+          },
+          "delivery": {
+            "default": "preview",
+            "enum": [
+              "preview",
+              "download",
+              "email"
+            ],
+            "title": "Delivery",
+            "type": "string"
+          },
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "string"
+          },
+          "include_client": {
+            "default": false,
+            "title": "Include Client",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "entry_id"
+        ],
+        "title": "SpectrumRenderIn",
         "type": "object"
       },
       "SubmoduleOut": {
@@ -4479,6 +5403,77 @@
           "size"
         ],
         "title": "WorkbookOut",
+        "type": "object"
+      },
+      "app__modules__bill_generator__schemas__SaveOut": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/EntryBillOut"
+          },
+          "filled_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filled Fields",
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "created",
+              "merged",
+              "unchanged"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "entry"
+        ],
+        "title": "SaveOut",
+        "type": "object"
+      },
+      "app__modules__patient_registry__schemas__SaveOut": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/EntryOut"
+          },
+          "filled_fields": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Filled Fields",
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "created",
+              "merged",
+              "unchanged"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "report_link": {
+            "default": "none",
+            "enum": [
+              "linked",
+              "already_linked",
+              "missing",
+              "none"
+            ],
+            "title": "Report Link",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "entry"
+        ],
+        "title": "SaveOut",
         "type": "object"
       }
     },
@@ -5189,6 +6184,373 @@
         "summary": "Refresh",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/entries": {
+      "post": {
+        "description": "Manual entry for a generated bill (Spectrum). The duplicate check runs first: an exact match is updated\n(201 -> 200); a possible match or field conflict returns 409 with what staff must decide.",
+        "operationId": "bill_generator_create_entry_for_bill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManualEntryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__bill_generator__schemas__SaveOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Entry For Bill",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/entries/{entry_id}/bill": {
+      "get": {
+        "description": "Prefill for the bill page: entry fields, test amounts, client name.",
+        "operationId": "bill_generator_get_bill_prefill",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryBillOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Bill Prefill",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/entries/{entry_id}/bill-data": {
+      "put": {
+        "description": "Save bill test amounts and client name; existing financial fields remain unchanged.",
+        "operationId": "bill_generator_save_bill_data",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entry_id",
+            "required": true,
+            "schema": {
+              "title": "Entry Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BillDataPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryBillOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Bill Data",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/labs": {
+      "get": {
+        "operationId": "bill_generator_list_labs",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LabOut"
+                  },
+                  "title": "Response Bill Generator List Labs",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Labs",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/metropolis/inspect": {
+      "post": {
+        "description": "Read the lab's bill in memory: lab bill no., rows, totals and the entry it matches. Nothing is stored.",
+        "operationId": "bill_generator_inspect_metropolis_bill",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_bill_generator_inspect_metropolis_bill"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabInspectOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Inspect Metropolis Bill",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/metropolis/render": {
+      "post": {
+        "description": "Edit the lab's own PDF in memory (only the permitted cells), verify, save test amounts and the lab bill\nnumber on the entry without changing its financial totals, then return the PDF or email it.",
+        "operationId": "bill_generator_render_metropolis_bill",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_bill_generator_render_metropolis_bill"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Render Metropolis Bill",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/spectrum/parse": {
+      "post": {
+        "description": "Read a Spectrum report in memory to start a bill. Nothing is stored (reports are stored by `reports`).",
+        "operationId": "bill_generator_parse_spectrum_report",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_bill_generator_parse_spectrum_report"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Parse Spectrum Report",
+        "tags": [
+          "bill_generator"
+        ]
+      }
+    },
+    "/api/v1/bill_generator/spectrum/render": {
+      "post": {
+        "description": "Render from the entry with an optional bill-only discount override; no override is stored.",
+        "operationId": "bill_generator_render_spectrum_bill",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpectrumRenderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Render Spectrum Bill",
+        "tags": [
+          "bill_generator"
         ]
       }
     },
@@ -6711,7 +8073,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveOut"
+                  "$ref": "#/components/schemas/app__modules__patient_registry__schemas__SaveOut"
                 }
               }
             },
@@ -6721,7 +8083,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaveOut"
+                  "$ref": "#/components/schemas/app__modules__patient_registry__schemas__SaveOut"
                 }
               }
             },

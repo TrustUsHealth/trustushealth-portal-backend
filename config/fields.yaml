@@ -1,4 +1,4 @@
-# The standard field list (PRD section 8). Nothing else is stored on an entry.
+# The standard field list. Nothing else is stored on an entry.
 fields:
   - { key: bill_no,           label: Bill No,           type: text,      auto: true }
   - { key: patient_name,      label: Patient Name,      type: text,      required_in: [patient_registry, bill_generator] }
@@ -19,3 +19,6 @@ fields:
   - { key: discount_amount,   label: Discount,          type: money,     default: 0 }
   - { key: net_amount,        label: Billed Amount,     type: money,     computed: true }   # gross - discount
   - { key: margin,            label: Margin,            type: money,     computed: true, internal: true, admin_only: true }   # net - lab_cost
+  - { key: test_amounts,      label: Test Amounts,      type: money_list, required_in: [bill_generator] }   # same order as tests; gross_amount is their sum
+  - { key: client_name,       label: Client Name,       type: text }                                         # printed on the bill only when chosen
+  - { key: bill_no_original,  label: Original Bill No,  type: text,      auto: true, internal: true }         # kept when a lab bill number replaces bill_no

@@ -9,9 +9,11 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from app.core.config import PortalConfig
+from app.domain import money
 from app.domain.parsing import standardize as std
 
-# The only user-editable fields of an entry (section 8). bill_no, net_amount, margin are never client-supplied.
+# The only user-editable fields of an entry (section 8). bill_no, bill_no_original, net_amount and margin are never
+# client-supplied. Existing gross_amount remains authoritative when bill test_amounts are edited.
 EDITABLE = [
     "partner_key",
     "patient_name",
@@ -29,6 +31,8 @@ EDITABLE = [
     "lab_cost",
     "gross_amount",
     "discount_amount",
+    "test_amounts",
+    "client_name",
 ]
 
 
@@ -76,21 +80,38 @@ def _to_datetime(v: Any, tz: ZoneInfo) -> str | None:
     return std.iso_datetime(dt)
 
 
-def _money(v: Any) -> float | None:
+def _money(v: Any) -> Decimal | None:
+    """Exact amount with two places, 0 to 10,000,000. Never float."""
     if empty(v):
         return None
     try:
-        d = Decimal(str(v).replace(",", "").strip())
-        if not d.is_finite() or d < 0 or d > Decimal("10000000"):
+        d = money.to_decimal(v)
+        if d < 0 or d > money.MAX_AMOUNT:
             raise InvalidOperation
-    except InvalidOperation:
+    except (InvalidOperation, ValueError, ArithmeticError):
         raise ValueError("enter a valid amount (0 or more)") from None
-    return float(d.quantize(Decimal("0.01")))
+    return d
+
+
+def _money_list(v: Any) -> list[Decimal] | None:
+    if v is None or (isinstance(v, list | tuple) and len(v) == 0):
+        return None
+    if not isinstance(v, list | tuple):
+        raise ValueError("enter one amount for every test")
+    out: list[Decimal] = []
+    for item in v:
+        amount = _money(item)
+        if amount is None:
+            raise ValueError("enter an amount for every test")
+        out.append(amount)
+    return out
 
 
 def _clean_one(key: str, v: Any, tz: ZoneInfo) -> Any:
     if key == "tests":
         return std.clean_test_list(v) or None
+    if key == "test_amounts":
+        return _money_list(v)
     if empty(v):
         return None
     if key == "partner_key":
@@ -133,6 +154,8 @@ def _clean_one(key: str, v: Any, tz: ZoneInfo) -> Any:
         return std.standardize_email(v)
     if key in ("lab_cost", "gross_amount", "discount_amount"):
         return _money(v)
+    if key == "client_name":
+        return _text(v, 120)
     return _text(v, 200)
 
 
@@ -147,10 +170,12 @@ def clean_fields(raw: dict[str, Any], cfg: PortalConfig, *, defaults: bool) -> d
                 out[key] = _clean_one(key, raw[key], tz)
             except ValueError as exc:
                 raise EntryError(422, f"{labels.get(key, key)}: {exc}") from None
+    if out.get("test_amounts"):  # initialize the incoming gross from its per-test amounts
+        out["gross_amount"] = money.total(out["test_amounts"])
     if defaults:
         for f in cfg.fields:
             if f.default is not None and not f.computed and out.get(f.key) is None:
-                out[f.key] = float(f.default) if f.type == "money" else f.default
+                out[f.key] = money.to_decimal(f.default) if f.type == "money" else f.default
     return out
 
 
@@ -158,12 +183,17 @@ def clean_fields(raw: dict[str, Any], cfg: PortalConfig, *, defaults: bool) -> d
 def derive(doc: dict[str, Any]) -> dict[str, Any]:
     """Values computed from the entry. None means 'remove this field'."""
     d: dict[str, Any] = {"name_norm": std.normalize_name(doc.get("patient_name") or "")}
-    gross, disc, cost = doc.get("gross_amount"), doc.get("discount_amount") or 0.0, doc.get("lab_cost")
-    net = float(Decimal(str(gross)) - Decimal(str(disc))) if gross is not None else None
-    d["net_amount"] = round(net, 2) if net is not None else None
-    d["margin"] = (
-        float(Decimal(str(net)) - Decimal(str(cost))) if net is not None and cost is not None else None
-    )
+    amounts = doc.get("test_amounts")
+    gross = money.opt(doc.get("gross_amount"))
+    if gross is None and amounts:
+        gross = money.total(amounts)
+    disc = money.opt(doc.get("discount_amount")) or money.ZERO
+    cost = money.opt(doc.get("lab_cost"))
+    net = gross - disc if gross is not None else None
+    if gross is not None:
+        d["gross_amount"] = gross
+    d["net_amount"] = net
+    d["margin"] = net - cost if net is not None and cost is not None else None
     d["status"] = "complete" if doc.get("patient_name") and doc.get("registration_date") and net is not None else "draft"
     pid, day, partner = doc.get("lab_pid"), doc.get("registration_date"), doc.get("partner_key")
     # unique on (partner_key, lab_pid, registration_date) where lab_pid exists. Implemented as one derived
@@ -181,8 +211,11 @@ def check_final(cfg: PortalConfig, module: str, doc: dict[str, Any]) -> None:
     missing = [f.label for f in cfg.fields if module in f.required_in and not f.auto and empty(doc.get(f.key))]
     if missing:
         raise EntryError(422, "Please fill: " + ", ".join(missing) + ".")
+    amounts, tests = doc.get("test_amounts"), doc.get("tests")
+    if amounts and tests and len(amounts) != len(tests):
+        raise EntryError(422, "Enter one amount for every test (the amounts and the tests must match).")
     g, disc = doc.get("gross_amount"), doc.get("discount_amount")
-    if g is not None and disc is not None and disc > g:
+    if g is not None and disc is not None and money.to_decimal(disc) > money.to_decimal(g):
         raise EntryError(422, "The discount cannot be more than the gross amount.")
 
 
@@ -191,8 +224,11 @@ def same_value(key: str, a: Any, b: Any) -> bool:
         return std.normalize_name(a) == std.normalize_name(b)
     if key == "tests":
         return {t.casefold() for t in a} == {t.casefold() for t in b}
-    if isinstance(a, int | float) and isinstance(b, int | float):
-        return abs(a - b) < 1e-9
+    if key == "test_amounts":
+        return [money.to_decimal(x) for x in a] == [money.to_decimal(x) for x in b]
+    numeric = (int, float, Decimal)
+    if isinstance(a, numeric) and isinstance(b, numeric) and not isinstance(a, bool) and not isinstance(b, bool):
+        return money.to_decimal(a) == money.to_decimal(b)
     if isinstance(a, str) and isinstance(b, str):
         return std.clean_text(a).casefold() == std.clean_text(b).casefold()
     return a == b
