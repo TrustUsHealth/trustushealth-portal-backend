@@ -8,6 +8,7 @@ import pytest
 from app.core.config import load_config
 from app.domain.parsing import parse_report
 from app.domain.parsing import standardize as std
+from app.domain.parsing.readers import read_pdf
 
 SAMPLES = Path("tests/samples")
 CFG = load_config("config")
@@ -39,6 +40,23 @@ def test_audit_only_values_are_read_but_not_saved():
         next((SAMPLES / "metropolis").glob("Report-*.pdf")).read_bytes(), "x.pdf", CFG.partners["metropolis"], CFG
     )
     assert m.raw_fields["VID No."] == "260330104942890"
+
+
+def test_pdf_reader_reads_every_page_in_long_reports():
+    import pymupdf
+
+    doc = pymupdf.open()
+    for number in range(45):
+        page = doc.new_page()
+        page.insert_text((72, 72), f"Report page {number + 1}")
+    data = doc.tobytes()
+    doc.close()
+
+    parsed = read_pdf(data)
+
+    assert len(parsed.pages) == 45
+    assert parsed.pages[-1].number == 45
+    assert parsed.truncated is False
 
 
 def test_standardisation_rules():
