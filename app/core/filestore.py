@@ -171,6 +171,13 @@ class DriveFileStore:
                 with self._request_lock:
                     return request_factory().execute()
             except Exception as exc:
+                from google.auth.exceptions import RefreshError
+
+                if isinstance(exc, RefreshError):
+                    raise FileStoreError(
+                        "Google Drive authentication expired or was revoked. An administrator must reauthorize "
+                        "Drive storage before report uploads can continue."
+                    ) from exc
                 retryable, status = self._retryable_http_error(exc)
                 if retryable and attempt < 2:
                     time.sleep(0.5 * (2**attempt))
@@ -225,7 +232,9 @@ class DriveFileStore:
             "upload",
             lambda: files.create(
                 body={"name": name, "mimeType": content_type, "parents": [parent_id]},
-                media_body=MediaIoBaseUpload(io.BytesIO(data), mimetype=content_type, resumable=False),
+                media_body=MediaIoBaseUpload(
+                    io.BytesIO(data), mimetype=content_type, chunksize=1024 * 1024, resumable=True
+                ),
                 fields="id",
             ),
         )

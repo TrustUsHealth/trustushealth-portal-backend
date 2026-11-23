@@ -11,7 +11,6 @@ import zipfile
 from app.domain.parsing.models import Box, DocxBlock, DocxDoc, Page, PdfDoc, Word
 
 log = logging.getLogger(__name__)
-MAX_PAGES = 40
 MAX_UNZIPPED_BYTES = 60 * 1024 * 1024
 
 
@@ -71,9 +70,6 @@ def _read_pdfplumber(data: bytes) -> tuple[list[Page], bool]:
     truncated = False
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for idx, p in enumerate(pdf.pages):
-            if idx >= MAX_PAGES:
-                truncated = True
-                break
             raw = p.extract_words(
                 x_tolerance=3,
                 y_tolerance=3,
@@ -114,9 +110,6 @@ def _read_pymupdf(data: bytes) -> tuple[list[Page], bool]:
         if doc.needs_pass:
             raise UnreadableFile("This PDF is password-protected.")
         for idx, page in enumerate(doc):
-            if idx >= MAX_PAGES:
-                truncated = True
-                break
             words = [
                 Word(text=w[4], x0=float(w[0]), x1=float(w[2]), top=float(w[1]), bottom=float(w[3]))
                 for w in page.get_text("words")

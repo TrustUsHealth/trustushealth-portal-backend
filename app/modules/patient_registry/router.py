@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from app.core import audit
 from app.core.config import PartnerCfg, PortalConfig
 from app.core.deps import CurrentUser, get_config, get_db, get_settings, require_role
-from app.core.filestore import FileStore, get_filestore
+from app.core.filestore import FileStore, FileStoreError, get_filestore
 from app.core.mailer import EmailDeliveryError
 from app.core.rbac import require_access
 from app.core.security import rate_limit, safe_equal
@@ -158,6 +158,8 @@ async def parse_entry_report(
         )
     except UploadError as exc:
         raise _fail(exc) from None
+    except FileStoreError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from None
     await audit.record(
         request, "report.upload", actor=scope.user, module=MODULE, submodule=partner.key, target=out.report_id
     )

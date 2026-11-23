@@ -38,7 +38,7 @@ from app.modules.patient_registry.schemas import (
 
 log = logging.getLogger(__name__)
 MODULE = "patient_registry"
-PARSE_TIMEOUT_SECONDS = 25
+PARSE_TIMEOUT_SECONDS = 120
 
 
 async def on_startup(app) -> None:

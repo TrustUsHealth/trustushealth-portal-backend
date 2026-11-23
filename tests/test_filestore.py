@@ -33,6 +33,7 @@ class FakeDrive:
         self.next_id = 0
         self.calls = []
         self.failures = []
+        self.media_uploads = []
 
     def files(self):
         return self
@@ -67,6 +68,8 @@ class FakeDrive:
         def result():
             self.next_id += 1
             drive_id = f"drive-{self.next_id}"
+            if media_body:
+                self.media_uploads.append(media_body)
             data = media_body._fd.getvalue() if media_body else b""
             self.items[drive_id] = {**body, "id": drive_id, "data": data}
             return {"id": drive_id}
@@ -112,7 +115,7 @@ async def test_mongo_store_reads_legacy_document_without_storage_marker():
 async def test_drive_store_uploads_and_reads_verified_private_file():
     api = FakeDrive()
     store = drive_store(api)
-    data = b"new report bytes"
+    data = b"new report bytes" * 150_000
     metadata = await store.pack(
         name="report.pdf", content_type="application/pdf", data=data, original=data, month_key="2026-01"
     )
@@ -123,6 +126,8 @@ async def test_drive_store_uploads_and_reads_verified_private_file():
     assert "data" not in metadata
     assert api.items[metadata["drive_id"]]["parents"] == ["drive-1"]
     assert api.items[metadata["drive_id"]]["mimeType"] == "application/pdf"
+    assert api.media_uploads[0].resumable() is True
+    assert api.media_uploads[0].chunksize() == 1024 * 1024
     assert api.calls.count("list") == 1
     assert stored.data == data
     assert stored.size == len(data)
@@ -324,6 +329,17 @@ def test_drive_retries_rate_limited_403_and_raises_clear_final_error(monkeypatch
     with pytest.raises(FileStoreError, match="Google Drive test failed \\(HTTP 403\\)"):
         api._execute("test", lambda: FakeRequest(lambda: (_ for _ in ()).throw(limited)))
     assert waits == [0.5, 1.0]
+
+
+def test_drive_reports_expired_or_revoked_refresh_token():
+    from google.auth.exceptions import RefreshError
+
+    api = drive_store()
+    def request():
+        return FakeRequest(lambda: (_ for _ in ()).throw(RefreshError("invalid_grant")))
+
+    with pytest.raises(FileStoreError, match="authentication expired or was revoked"):
+        api._execute("test", request)
 
 
 def test_drive_settings_are_required_only_when_drive_is_selected():

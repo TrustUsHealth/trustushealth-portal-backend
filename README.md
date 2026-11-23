@@ -140,6 +140,11 @@ The existing `file.sha256` remains the original-upload dedupe hash; Drive-backed
 5. Configure `GDRIVE_CLIENT_ID`, `GDRIVE_CLIENT_SECRET`, `GDRIVE_REFRESH_TOKEN`, and `GDRIVE_ROOT_FOLDER_ID` in the
    deployment environment. Never commit or log these values. `FILE_STORE` remains `mongo` until migration is verified.
 
+If report uploads fail with `invalid_grant` or the API says Drive authentication expired or was revoked, the refresh
+token cannot be renewed automatically. Re-run `python -m scripts.gdrive_auth path\to\client_secret.json` on a trusted
+machine, then replace `GDRIVE_REFRESH_TOKEN` in the deployment environment and restart the backend. This is a Drive
+credential issue, not a file-size or parsing failure.
+
 #### Rollout
 
 Run commands from the backend directory with a Python environment containing the project dependencies. Use the same
