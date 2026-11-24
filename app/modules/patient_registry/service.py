@@ -52,6 +52,10 @@ async def on_startup(app) -> None:
     fixed = await entry_service.assign_missing_bill_nos(db, cfg)
     if fixed:
         log.warning("assigned bill numbers to %d entries that were interrupted before numbering", fixed)
+    # Spectrum portal auto-sync: config check, ledger indexes, daily scheduler (imported here to avoid an import cycle).
+    from app.modules.patient_registry import spectrum_sync
+
+    await spectrum_sync.on_startup(app)
 
 
 # ───────────────────────────── access ─────────────────────────────

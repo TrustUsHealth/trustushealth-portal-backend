@@ -40,6 +40,7 @@ from app.modules.patient_registry.schemas import (
     WorkbookOut,
 )
 from app.modules.patient_registry.service import MODULE
+from app.modules.patient_registry.sync_router import router as spectrum_sync_router
 
 log = logging.getLogger(__name__)
 router = APIRouter(tags=["patient_registry"])
@@ -466,3 +467,7 @@ async def run_monthly_excel_job(
     if result["status"] == "partial":
         raise HTTPException(status_code=502, detail="Some recipients could not be emailed; retry the job.")
     return JobOut(**result)
+
+
+# Spectrum portal auto-sync (admin run / status endpoints and the cron job endpoint).
+router.include_router(spectrum_sync_router)

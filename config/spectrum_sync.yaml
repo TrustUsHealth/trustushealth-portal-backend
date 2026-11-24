@@ -1,0 +1,30 @@
+# Automatic entry of Spectrum Laboratory visits from the Spectrum EMR portal.
+# Credentials are NOT here: set SPECTRUM_PORTAL_USERNAME / SPECTRUM_PORTAL_PASSWORD in .env.
+# Manual entry keeps working exactly as before; the sync only adds what is missing, as drafts.
+enabled: true
+partner_key: spectrum
+
+portal:
+  base_url: https://emr.spectrumhealthcare.in/QR_Gershwin/Forms
+  request_timeout_seconds: 60
+  pdf_timeout_seconds: 120
+  pause_between_requests_seconds: 0.3      # politeness delay between portal requests
+  max_retries: 3
+  verify_ssl: true
+  # test_status_page: fm_Test_Status.aspx  # only if the test list opens at a URL the sync cannot detect itself
+
+schedule:
+  enabled: true
+  run_time: "21:00"                        # once a day, local time (timezone in app.yaml = IST)
+  catch_up_on_start: true                  # app was asleep at run_time? run once when it wakes up (same day)
+
+daily_run:
+  lookback_days: 7                         # daily run reads today and the 7 days before (only NEW rows are scraped)
+
+window_days: 1                             # portal is queried one day at a time (keeps ViewState small)
+max_attempts: 8                            # a row that keeps failing is retried this many times, then left for staff
+max_entries_per_run: 400                   # safety cap; the next run continues where this one stopped
+abort_after_consecutive_failures: 5        # portal down? stop instead of hammering it
+skip_if_entry_has_report: true             # entry already there WITH a report -> do not scrape it again
+create_entry_when_report_unreadable: true  # PDF cannot be parsed -> still create the draft from portal data
+lock_minutes: 180
