@@ -6,6 +6,10 @@ Only scraping lives here: no database, no entries. The flow mirrors a browser se
     per row:  "Test Wise Status" postback -> tests[]      (table ctl00_cpTechmed_grdTestStatusList)
               tick that row only + Print postback -> hidden ctl00_cpTechmed_hidTemplate_Report_Url
               GET fm_Preview_Report.aspx?ourls=... -> PDF
+    end:      GET fm_LogOut.aspx
+
+The portal keeps selection state in the login session, so a patient's report must be produced in its OWN session:
+`fresh_session()` = logout + login + View for the patient's date. Callers log out after each patient.
 
 WebForms rules honoured: every response of an async postback carries the next __VIEWSTATE and
 __EVENTVALIDATION (`hiddenField` entries); they are absorbed and re-sent on the next request.
@@ -31,6 +35,7 @@ log = logging.getLogger(__name__)
 T = TypeVar("T")
 
 LOGIN_PAGE = "fm_Login.aspx"
+LOGOUT_PAGE = "fm_LogOut.aspx"
 DASHBOARD_PAGE = "fm_Dashboard.aspx"
 REPORT_PAGE = "fm_Test_Report.aspx"
 PREVIEW_PAGE = "fm_Preview_Report.aspx"
@@ -132,7 +137,7 @@ class PortalSettings:
 class PortalRow:
     """One line of the Test Report grid."""
 
-    ctl: str  # grid row token, e.g. "ctl03"
+    ctl: str  # grid row token, e.g. "ctl03" (differs between sessions; rows are matched by `key`)
     branch_name: str
     branch_code: str
     sid_no: str
@@ -536,6 +541,8 @@ class SpectrumPortalClient:
 
     # ── session
     async def login(self) -> None:
+        if self._http is not None:
+            self._http.cookies.clear()  # never inherit another session
         url = self._url(LOGIN_PAGE)
         page = await self._request("GET", url)
         fields = collect_fields(page.text)
@@ -562,6 +569,24 @@ class SpectrumPortalClient:
         if self._is_login(dash) or _looks_like_login(dash.text):
             raise PortalAuthError("The portal rejected the user name or password.")
         self._form, self._rows = {}, {}
+
+    async def logout(self) -> None:
+        """End the portal session (GET fm_LogOut.aspx) and forget everything tied to it. Never raises."""
+        try:
+            if self._http is not None:
+                await self._request("GET", self._url(LOGOUT_PAGE))
+        except PortalError as exc:
+            log.warning("Spectrum portal logout failed (%s); the session cookie is dropped anyway", exc)
+        finally:
+            if self._http is not None:
+                self._http.cookies.clear()
+            self._form, self._rows, self._window = {}, {}, None
+
+    async def fresh_session(self, date_from: date, date_to: date) -> list[PortalRow]:
+        """Logout, login, open the Test Report page and View [date_from, date_to]: a clean session for one task."""
+        await self.logout()
+        await self.login()
+        return await self.open_window(date_from, date_to)
 
     async def _open_report_page(self) -> None:
         resp = await self._request("GET", self._report_url)
@@ -610,7 +635,7 @@ class SpectrumPortalClient:
     def _current(self, row: PortalRow) -> PortalRow:
         cur = self._rows.get(row.key)
         if cur is None:
-            raise PortalError("This row is no longer in the portal list.")
+            raise PortalError("This row is not in the portal list of the current session.")
         return cur
 
     # ── tests

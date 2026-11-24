@@ -1,7 +1,10 @@
-"""Spectrum portal -> draft entries + reports. Idempotent, one patient at a time.
+"""Spectrum portal -> draft entries + reports. Idempotent, one patient at a time, one portal session per patient.
 
-Per portal row (SID): scrape tests and the PDF, store the report, parse it, build the entry
-(portal: name/age/gender/tests/lab_cost; report: everything else) and save it through the shared
+Per date window: log in, read the day's list, log out. Then for EACH pending row: logout + login + open that
+row's date, scrape tests, Print that row's report, download the PDF, log out (the portal keeps selection state
+in the session, so sharing a session between patients produced merged reports). The report is verified to
+belong to the row (single patient, matching name) before it is stored or linked. Then the entry is built
+(portal: name/age/gender/tests/lab_cost; report: everything else) and saved through the shared
 `entry_service.upsert` (so the normal duplicate rules apply). Entries are drafts: no gross amount is sent.
 
 Never-twice guarantees: ledger `spectrum_sync_items` (unique source_key), a pre-check against existing entries,
@@ -26,6 +29,7 @@ from zoneinfo import ZoneInfo
 from pymongo import ReturnDocument
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import DuplicateKeyError
+from rapidfuzz import fuzz
 
 from app.core.audit import COLLECTION as AUDIT_COLLECTION
 from app.core.config import ConfigError, PortalConfig
@@ -36,6 +40,7 @@ from app.domain.entries import service as entry_service
 from app.domain.entries.dedupe import find_matches
 from app.domain.entries.model import EntryError, empty
 from app.domain.parsing import ParseError, UnreadableFile, UploadError, parse_report, validate_upload
+from app.domain.parsing import standardize as std
 from app.domain.parsing.readers import safe_filename
 from app.domain.reports import service as reports
 from app.modules.patient_registry import service as pr_service
@@ -52,6 +57,7 @@ STATE = "spectrum_sync_state"
 LOCK_ID = "lock"
 PARSE_TIMEOUT_SECONDS = 120
 STARTUP_DELAY_SECONDS = 20
+NAME_MATCH_MIN = 0.8  # report name vs portal name (titles ignored); lower = a different patient's report
 PARSED_KEYS = ("registration_date", "lab_pid", "referred_by", "collection_time", "reporting_time", "phone", "email")
 _TASKS: set[asyncio.Task] = set()
 
@@ -275,9 +281,11 @@ async def _execute(ctx: SyncContext, run_id: Any, owner: str, params: RunParams)
     try:
         factory = ctx.client_factory or (lambda: SpectrumPortalClient(portal_settings(ctx.sync_cfg, ctx.secrets)))
         async with factory() as client:
-            await client.login()
             runner = _Runner(ctx, client, run_id, owner, params)
-            status, message = await runner.run()
+            try:
+                status, message = await runner.run()
+            finally:
+                await client.logout()  # never leave a portal session open
     except PortalAuthError as exc:
         status, message = "failed", str(exc)
         log.error("Spectrum sync: %s", exc)
@@ -340,7 +348,8 @@ class _Runner:
         budget = sync.max_entries_per_run
         for w_from, w_to in chunk_windows(self.params.date_from, self.params.date_to, sync.window_days):
             await self._heartbeat()
-            rows = await self.client.open_window(w_from, w_to)
+            rows = await self.client.fresh_session(w_from, w_to)  # session 1: only reads the day's list
+            await self.client.logout()
             self.stats.windows += 1
             self.stats.rows_seen += len(rows)
             pending = await self._pending(rows)
@@ -436,7 +445,7 @@ class _Runner:
             upsert=True,
         )
 
-    # ── one patient
+    # ── one patient = one portal session
     async def _claim(self, row: PortalRow, key: str) -> dict[str, Any]:
         return await self.db[LEDGER].find_one_and_update(
             {"source_key": key},
@@ -455,6 +464,8 @@ class _Runner:
         self.stats.attempted += 1
         warnings: list[str] = []
         try:
+            # logout + login + the row's own date: nothing from any other patient can be in this session
+            await self.client.fresh_session(row.sid_date, row.sid_date)
             tests = await self.client.fetch_tests(row)
             stored = await self._report(row, key, claim, warnings)
             saved = await self._save_entry(row, tests, stored, warnings)
@@ -469,6 +480,8 @@ class _Runner:
                 {"$set": {"status": "failed", "last_error": f"{type(exc).__name__}: {exc}"[:300], "warnings": warnings, "updated_at": utcnow()}},
             )
             return
+        finally:
+            await self.client.logout()
         self.failures_in_a_row = 0
         now = utcnow()
         sets: dict[str, Any] = {
@@ -484,11 +497,23 @@ class _Runner:
             sets["entry_id"] = str(saved.entry["_id"])
         await self.db[LEDGER].update_one({"source_key": key}, {"$set": sets})
 
+    @staticmethod
+    def _mismatch(row: PortalRow, patient: dict[str, Any], flags: list[str] | None) -> str | None:
+        """Why this report cannot be this row's report (None = fine)."""
+        if "mixed_patients" in (flags or []):
+            return f"The downloaded report for SID {row.sid_no} contains more than one patient; not saved."
+        name = patient.get("patient_name")
+        if name:
+            sim = fuzz.token_sort_ratio(std.normalize_name(name), std.normalize_name(row.patient_name)) / 100
+            if sim < NAME_MATCH_MIN:
+                return f"The downloaded report for SID {row.sid_no} belongs to a different patient; not saved."
+        return None
+
     async def _report(self, row: PortalRow, key: str, claim: dict[str, Any], warnings: list[str]) -> reports.StoredReport:
         ctx = self.ctx
         if claim.get("report_ref"):  # an earlier attempt already stored the report: do not download again
             meta = await reports.get_meta(self.db, claim["report_ref"])
-            if meta is not None:
+            if meta is not None and self._mismatch(row, meta.get("patient") or {}, (meta.get("parse") or {}).get("flags")) is None:
                 return reports.StoredReport(claim["report_ref"], meta, False)
         scraped = await self.client.fetch_report(row)
         data = scraped.data
@@ -501,7 +526,11 @@ class _Runner:
         today = today_local(ctx.cfg)
         months = [_month_key(row.sid_date), _month_key(_prev_month(row.sid_date)), _month_key(today), _month_key(_prev_month(today))]
         stored = await reports.find_by_hash(self.db, sha, months)
-        if stored is None:
+        if stored is not None:
+            problem = self._mismatch(row, stored.doc.get("patient") or {}, (stored.doc.get("parse") or {}).get("flags"))
+            if problem:
+                raise RowError(problem)
+        else:
             result = None
             try:
                 result = await asyncio.wait_for(
@@ -511,8 +540,12 @@ class _Runner:
                 if not ctx.sync_cfg.create_entry_when_report_unreadable:
                     raise RowError(f"The report could not be read: {exc}") from None
                 warnings.append("report_unreadable")
-            if result is not None and result.needs_review:
-                warnings.append("report_needs_review")
+            if result is not None:
+                problem = self._mismatch(row, result.fields, result.flags)
+                if problem:
+                    raise RowError(problem)  # nothing is stored or linked
+                if result.needs_review:
+                    warnings.append("report_needs_review")
             reg = result.fields.get("registration_date") if result else None
             stored = await reports.store_report(
                 self.db,
@@ -575,7 +608,7 @@ class _Runner:
         if res.decision is not None:
             d = res.decision
             if d.kind == "conflict" and d.match is not None:
-                await self._link(stored, d.match)
+                await self._link(stored, d.match, warnings)
                 self.stats.existing_conflict += 1
                 return _Saved("done", "existing_conflict", d.match, {"conflict_fields": [c["field"] for c in d.conflicts]})
             if d.kind == "possible_match" and self._distinct_people(raw, d.possible):
@@ -584,7 +617,7 @@ class _Runner:
                 self.stats.needs_review += 1
                 return _Saved("needs_review", "possible_duplicate", None, {"possible_entry_ids": [str(c["_id"]) for c in d.possible]})
         entry = res.entry
-        await self._link(stored, entry)
+        await self._link(stored, entry, warnings)
         if res.outcome == "created":
             self.stats.created += 1
         elif res.outcome == "merged":
@@ -601,7 +634,10 @@ class _Runner:
             )
         return _Saved("done", res.outcome, entry)
 
-    async def _link(self, stored: reports.StoredReport, entry: dict[str, Any]) -> None:
+    async def _link(self, stored: reports.StoredReport, entry: dict[str, Any], warnings: list[str]) -> None:
+        others = [r for r in await reports.reports_for_entry(self.db, entry) if r["ref"] != stored.ref]
+        if others:
+            warnings.append("entry_has_other_report")  # a person should look: one visit normally has one report
         await reports.link_entry(self.db, stored.ref, str(entry["_id"]), entry["partner_key"])
 
     async def _audit(self, action: str, target: str | None, fields: list[str]) -> None:
